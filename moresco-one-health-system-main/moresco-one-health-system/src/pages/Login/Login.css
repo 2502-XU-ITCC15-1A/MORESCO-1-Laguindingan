@@ -1,0 +1,127 @@
+/* ── Login Page ─────────────────────────────────────────── */
+
+.login-bg {
+  min-height: 100vh;
+  background: #1a1a2e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Georgia', serif;
+}
+
+.login-card {
+  background: linear-gradient(160deg, #0d1f8c 0%, #0a1245 100%);
+  border: 1px solid rgba(74, 159, 255, 0.25);
+  border-radius: 4px;
+  padding: 2.5rem 3rem;
+  width: 460px;
+  box-shadow: 0 8px 40px rgba(0, 0, 50, 0.6);
+}
+
+/* Header */
+.login-header {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  margin-bottom: 1rem;
+}
+
+.login-logo {
+  flex-shrink: 0;
+}
+
+.login-system-name {
+  margin: 0;
+  color: #ffffff;
+  font-size: 1.8rem;
+  font-weight: bold;
+  letter-spacing: 2px;
+}
+
+.login-system-sub {
+  margin: 4px 0 0;
+  color: #c8d8f0;
+  font-size: 0.85rem;
+  font-weight: normal;
+}
+
+/* Divider */
+.login-divider {
+  height: 1px;
+  background: rgba(74, 159, 255, 0.3);
+  margin: 1.2rem 0 1.8rem;
+}
+
+/* Form */
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.login-field {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.login-label {
+  color: #ffffff;
+  font-size: 0.95rem;
+  width: 90px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.login-input {
+  flex: 1;
+  padding: 6px 10px;
+  background: #ffffff;
+  border: none;
+  border-radius: 2px;
+  font-size: 0.95rem;
+  outline: none;
+  font-family: 'Georgia', serif;
+}
+
+.login-input:focus {
+  outline: 2px solid #4a7fd4;
+}
+
+/* Error */
+.login-error {
+  color: #ff8888;
+  font-size: 0.85rem;
+  text-align: center;
+  margin: 0.25rem 0 0.75rem;
+}
+
+/* Button */
+.login-btn-wrap {
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.login-btn {
+  background: #ffffff;
+  color: #0a1245;
+  border: none;
+  border-radius: 3px;
+  padding: 10px 64px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: 'Georgia', serif;
+  letter-spacing: 1px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.login-btn:hover {
+  background: #c8d8f0;
+}
+
+.login-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
