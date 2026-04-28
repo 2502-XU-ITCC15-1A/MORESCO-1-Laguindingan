@@ -1,0 +1,282 @@
+.nav-container {
+  background: linear-gradient(180deg, #00006F 0%, #000058 100%);
+  padding: 10px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.5);
+  position: relative;
+  z-index: 10;
+}
+
+/* LEFT */
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.nav-logo-circle {
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 6px rgba(74,159,255,0.4));
+}
+
+.nav-system-name {
+  display: flex;
+  flex-direction: column;
+  color: white;
+  line-height: 1.2;
+}
+
+.nav-system-name h1 {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+
+.nav-system-name p {
+  font-size: 11px;
+  margin: 0;
+  color: rgba(200, 216, 240, 0.85);
+}
+
+/* CENTER */
+.nav-center {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
+/* Badge is now a <button> */
+.nav-page-badge {
+  background: #0D2B77;
+  color: #ffffff;
+  padding: 9px 48px;
+  border-radius: 8px;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  border: 1px solid rgba(74, 159, 255, 0.3);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
+  font-family: inherit;
+}
+
+.nav-page-badge:hover {
+  background: #1a3c9c;
+  border-color: rgba(74, 159, 255, 0.7);
+  box-shadow: 0 0 16px rgba(74, 159, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+.nav-page-badge:active {
+  transform: translateY(0);
+}
+
+/* RIGHT */
+.nav-end {
+  display: flex;
+  align-items: center;
+}
+
+.nav-profile {
+  display: flex;
+  flex-direction: column;
+  color: white;
+  text-align: right;
+}
+
+.nav-profile-name {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.nav-profile-role {
+  font-size: 12px;
+  color: rgba(200, 216, 240, 0.8);
+}
+
+/* ── MUI Drawer Overrides ──────────────────────────────── */
+.nav-drawer-paper {
+  width: 280px !important;
+  background: linear-gradient(180deg, #00006F 0%, #00004a 100%) !important;
+  color: white !important;
+  display: flex !important;
+  flex-direction: column !important;
+  border-left: 1px solid rgba(74, 159, 255, 0.2) !important;
+}
+
+/* Drawer Header */
+.drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 16px 14px;
+}
+
+.drawer-logo-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.drawer-sys-name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  line-height: 1.2;
+}
+
+.drawer-sys-sub {
+  margin: 0;
+  font-size: 10px;
+  color: rgba(200, 216, 240, 0.7);
+  line-height: 1.3;
+}
+
+.drawer-close-btn {
+  color: white !important;
+  padding: 6px !important;
+  border-radius: 8px !important;
+  transition: background 0.2s !important;
+}
+
+.drawer-close-btn:hover {
+  background: rgba(255,255,255,0.12) !important;
+}
+
+/* Divider */
+.drawer-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(74,159,255,0.4), transparent);
+  margin: 0 16px;
+}
+
+/* Nav Links */
+.drawer-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 12px;
+  gap: 6px;
+  flex: 1;
+}
+
+.drawer-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: none;
+  background: none;
+  color: rgba(200, 216, 240, 0.75);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+  text-align: left;
+  position: relative;
+  font-family: inherit;
+}
+
+.drawer-nav-item:hover {
+  background: rgba(255,255,255,0.08);
+  color: white;
+}
+
+.drawer-nav-item.active {
+  background: rgba(74, 159, 255, 0.18);
+  color: white;
+  font-weight: 700;
+  border: 1px solid rgba(74, 159, 255, 0.3);
+}
+
+.drawer-nav-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.drawer-nav-label {
+  flex: 1;
+}
+
+.drawer-active-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #4a9fff;
+  box-shadow: 0 0 6px rgba(74, 159, 255, 0.7);
+}
+
+/* Footer */
+.drawer-footer {
+  padding-bottom: 20px;
+}
+
+.drawer-user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 16px 0;
+}
+
+.drawer-user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a3c9c, #4a9fff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+  border: 2px solid rgba(74, 159, 255, 0.4);
+}
+
+.drawer-user-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.drawer-user-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: white;
+}
+
+.drawer-user-role {
+  font-size: 11px;
+  color: rgba(200, 216, 240, 0.7);
+}
+
+.drawer-logout-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: calc(100% - 24px);
+  margin: 10px 12px 0;
+  padding: 11px 14px;
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 10px;
+  color: #fca5a5;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+  font-family: inherit;
+}
+
+.drawer-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.28);
+  border-color: rgba(239, 68, 68, 0.6);
+  color: #fff;
+}

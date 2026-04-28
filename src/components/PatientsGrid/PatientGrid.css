@@ -1,0 +1,166 @@
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
+    url("https://moresco1.com/wp-content/uploads/2025/11/ChatGPT-Image-Nov-6-2025-02_51_02-PM.png");
+  background-size: cover;
+  background-position: center;
+  animation: bgZoom 16s ease-in-out infinite;
+  position: relative;
+  padding: 16px 24px 0;
+}
+
+@keyframes bgZoom {
+  0%, 100% { background-size: 100%; }
+  50%       { background-size: 112%; }
+}
+
+/* Toolbar */
+.grid-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+  flex-shrink: 0;
+}
+
+.grid-search {
+  flex: 1;
+  padding: 9px 16px;
+  border: 1px solid rgba(74, 159, 255, 0.5);
+  border-radius: 20px;
+  background: rgba(17, 46, 120, 0.85);
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.grid-search::placeholder { color: rgba(255,255,255,0.55); }
+.grid-search:focus {
+  border-color: #fff;
+  box-shadow: 0 0 0 3px rgba(255,255,255,0.1);
+}
+
+.grid-sort {
+  padding: 9px 14px;
+  border: 1px solid rgba(74, 159, 255, 0.5);
+  border-radius: 20px;
+  background: rgba(17, 46, 120, 0.85);
+  color: #fff;
+  font-size: 14px;
+  outline: none;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: border-color 0.2s;
+}
+.grid-sort:focus { border-color: #fff; }
+
+/* Grid wrapper */
+.patient-grid-wrapper {
+  flex: 1;
+  background: rgba(13, 43, 119, 0.55);
+  backdrop-filter: blur(10px);
+  border-radius: 16px 16px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(74, 159, 255, 0.15);
+  border-bottom: none;
+}
+
+.patient-grid-container {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 14px;
+  padding: 16px;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.grid-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: rgba(255,255,255,0.5);
+  padding: 60px 0;
+  font-size: 16px;
+}
+
+/* Pagination */
+.grid-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 0 14px;
+  flex-shrink: 0;
+}
+
+.page-btn {
+  background: none;
+  border: 1px solid rgba(255,255,255,0.3);
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.page-btn:hover:not(:disabled) {
+  background: rgba(255,255,255,0.15);
+  border-color: #fff;
+}
+
+.page-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.page-btn.active {
+  background: #0D2B77;
+  border-color: #4a9fff;
+  font-weight: 700;
+  color: #fff;
+}
+
+.page-ellipsis {
+  color: rgba(255,255,255,0.5);
+  width: 20px;
+  text-align: center;
+}
+
+/* FAB Add Button */
+.fab-add {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #0D2B77;
+  color: #fff;
+  border: 2px solid #4a9fff;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  transition: transform 0.2s, box-shadow 0.2s;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab-add:hover {
+  transform: scale(1.1) rotate(90deg);
+  box-shadow: 0 6px 28px rgba(74, 159, 255, 0.5);
+}

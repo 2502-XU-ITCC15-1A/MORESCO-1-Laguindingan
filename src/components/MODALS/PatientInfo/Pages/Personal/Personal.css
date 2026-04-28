@@ -1,0 +1,96 @@
+.personal-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.personal-section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.personal-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.info-grid {
+  display: grid;
+  gap: 6px;
+}
+
+.info-three { grid-template-columns: repeat(3, 1fr); }
+.info-one   { grid-template-columns: repeat(1, 1fr); }
+
+.info-box {
+  background: #00006F;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.info-box-label {
+  font-size: 9px;
+  color: rgba(200, 216, 240, 0.7);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.info-box-value-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.info-box-value {
+  font-size: 13px;
+  color: white;
+  font-weight: 600;
+}
+
+.info-box-badge {
+  font-size: 9px;
+  color: white;
+  padding: 2px 7px;
+  border-radius: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Address */
+.addr-box {
+  background: #00006F;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.addr-box-label {
+  font-size: 9px;
+  color: rgba(200, 216, 240, 0.7);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.addr-box-value {
+  font-size: 12px;
+  color: white;
+  font-weight: 500;
+  line-height: 1.4;
+}

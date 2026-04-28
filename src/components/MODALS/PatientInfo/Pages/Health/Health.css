@@ -1,0 +1,199 @@
+.health-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.health-section {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.health-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.health-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin: 0;
+}
+
+.health-header-btns {
+  display: flex;
+  gap: 6px;
+}
+
+.health-edit-btn {
+  background: #00006F;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.health-edit-btn:hover { opacity: 0.85; }
+
+.health-save-btn {
+  background: #16a34a;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 14px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s;
+}
+.health-save-btn:hover { opacity: 0.85; }
+
+.health-cancel-btn {
+  background: #e5e7eb;
+  color: #374151;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.health-cancel-btn:hover { background: #d1d5db; }
+
+/* Fields */
+.health-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.health-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #00006F;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Blood type select */
+.health-blood-select {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #111827;
+  background: white;
+  outline: none;
+  font-family: inherit;
+  cursor: pointer;
+  width: 110px;
+}
+.health-blood-select:focus { border-color: #00006F; }
+
+/* Blood type badge */
+.health-blood-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  background: #e5e7eb;
+  color: #6b7280;
+}
+.health-blood-badge.known {
+  background: #00006F;
+  color: white;
+}
+
+/* Tag list */
+.health-tag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.health-tag-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 28px;
+}
+
+.health-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #00006F;
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.health-tag-remove {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0;
+  margin-left: 2px;
+  transition: color 0.15s;
+}
+.health-tag-remove:hover { color: #fff; }
+
+.health-tag-empty {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+  align-self: center;
+}
+
+.health-tag-input-row {
+  display: flex;
+  gap: 6px;
+}
+
+.health-tag-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 12px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color 0.15s;
+}
+.health-tag-input:focus { border-color: #00006F; }
+
+.health-tag-add {
+  background: #00006F;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+}
+.health-tag-add:hover { opacity: 0.85; }
