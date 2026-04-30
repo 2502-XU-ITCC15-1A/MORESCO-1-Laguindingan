@@ -33,6 +33,13 @@
   filter: drop-shadow(0 0 8px rgba(74, 159, 255, 0.4));
 }
 
+.login-logo-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+
 .login-system-name {
   color: #ffffff;
   font-size: 1.9rem;
