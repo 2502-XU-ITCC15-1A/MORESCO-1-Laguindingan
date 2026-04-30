@@ -1,6 +1,15 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import moresco1Logo from '../../assets/logo.png'
 import './Login.css'
+
+// ── Accounts — add or edit users here ──────────────────────
+const ACCOUNTS = [
+  { username: 'andrei.valdez',  password: 'moresco2024', role: 'CEO of Nursing' },
+  { username: 'admin',          password: 'admin123',    role: 'Administrator'  },
+  { username: 'nurse1',         password: 'nurse123',    role: 'Staff Nurse'    },
+]
+// ───────────────────────────────────────────────────────────
 
 function Login() {
   const [username, setUsername] = useState('')
@@ -12,31 +21,34 @@ function Login() {
   function handleLogin(e) {
     e.preventDefault()
     setError('')
+
     if (!username || !password) {
       setError('Please enter your username and password.')
       return
     }
+
     setLoading(true)
-    // Replace with real API call when backend is ready
     setTimeout(() => {
       setLoading(false)
-      navigate('/patients')
-    }, 900)
+      const match = ACCOUNTS.find(
+        a => a.username === username.trim() && a.password === password
+      )
+      if (match) {
+        navigate('/patients')
+      } else {
+        setError('Invalid username or password.')
+      }
+    }, 700)
   }
 
   return (
     <div className="login-bg">
       <div className="login-card">
 
-        {/* Header */}
+        {/* Header — real logo.png */}
         <div className="login-header">
           <div className="login-logo-wrap">
-            {/* Inline SVG logo matching the M1 circle icon */}
-            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="32" cy="32" r="32" fill="#0D2B77"/>
-              <circle cx="32" cy="32" r="29" stroke="#4a9fff" strokeWidth="1.5" fill="none"/>
-              <text x="32" y="40" textAnchor="middle" fill="white" fontSize="24" fontWeight="bold" fontFamily="Arial">M1</text>
-            </svg>
+            <img src={moresco1Logo} alt="Moresco 1 Logo" className="login-logo-img" />
           </div>
           <div className="login-titles">
             <h1 className="login-system-name">MORESCO-1</h1>
