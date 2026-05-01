@@ -42,7 +42,7 @@ function Login() {
           </div>
           <div className="login-titles">
             <h1 className="login-system-name">MORESCO-1</h1>
-            <p className="login-system-sub">Employee Health Information System</p>
+            <p className="login-system-sub">Employee Health Information Tracking and Management System</p>
           </div>
         </div>
 
