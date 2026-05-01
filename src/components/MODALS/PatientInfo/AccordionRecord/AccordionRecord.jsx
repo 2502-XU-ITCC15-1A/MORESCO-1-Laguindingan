@@ -1,27 +1,29 @@
-import { useState, useRef } from 'react'
+import { useRef, useState } from 'react'
 import './AccordionRecord.css'
 
-// Strip the unit suffix so the nurse only sees/types the number
 function extractValue(str) {
   if (!str) return ''
-  return str.replace(/\s*(mmhg|bpm|%|°?c)\s*/gi, '').trim()
+  return str.replace(/\s*(mmhg|bpm|%|c)\s*/gi, '').trim()
 }
 
-function AccordionRecord({ record, onDelete }) {
-  const [open, setOpen]         = useState(false)
-  const [tab, setTab]           = useState('complaints')
+function AccordionRecord({ record, onDelete, onSave, diseases = [] }) {
+  const [open, setOpen] = useState(false)
+  const [tab, setTab] = useState('complaints')
   const [editMode, setEditMode] = useState(false)
-  const photoInputRef           = useRef(null)
+  const [saving, setSaving] = useState(false)
+  const [photoFile, setPhotoFile] = useState(null)
+  const [zoomPhoto, setZoomPhoto] = useState(false)
+  const photoInputRef = useRef(null)
 
   const [form, setForm] = useState({
-    bpVal:      extractValue(record.bpVal  || record.bp),
-    o2Val:      extractValue(record.o2Val  || record.o2),
-    hrVal:      extractValue(record.hrVal  || record.hr),
-    tempVal:    extractValue(record.tempVal || record.temp),
+    bpVal: extractValue(record.bpVal || record.bp),
+    o2Val: extractValue(record.o2Val || record.o2),
+    hrVal: extractValue(record.hrVal || record.hr),
+    tempVal: extractValue(record.tempVal || record.temp),
     complaints: record.complaints || '',
-    diagnosis:  record.diagnosis  || '',
-    remarks:    record.remarks    || '',
-    photoUrl:   record.photoUrl   || null,
+    diagnosis: record.diagnosis || '',
+    remarks: record.remarks || '',
+    photoUrl: record.photoUrl || null,
   })
 
   function update(field, value) {
@@ -31,24 +33,32 @@ function AccordionRecord({ record, onDelete }) {
   function handlePhotoChange(e) {
     const file = e.target.files[0]
     if (!file) return
+    setPhotoFile(file)
     const reader = new FileReader()
     reader.onload = ev => update('photoUrl', ev.target.result)
     reader.readAsDataURL(file)
   }
 
-  // Formatted display strings
-  const displayBP   = form.bpVal   ? `${form.bpVal} mmhg`  : ''
-  const displayO2   = form.o2Val   ? `${form.o2Val} %`      : ''
-  const displayHR   = form.hrVal   ? `${form.hrVal} bpm`    : ''
-  const displayTemp = form.tempVal ? `${form.tempVal} °C`   : ''
-  const hasVitals   = displayBP || displayO2 || displayHR || displayTemp
+  async function handleSave() {
+    setSaving(true)
+    try {
+      await onSave?.(form, photoFile)
+      setPhotoFile(null)
+      setEditMode(false)
+    } finally {
+      setSaving(false)
+    }
+  }
 
+  const displayBP = form.bpVal ? `${form.bpVal} mmhg` : ''
+  const displayO2 = form.o2Val ? `${form.o2Val} %` : ''
+  const displayHR = form.hrVal ? `${form.hrVal} bpm` : ''
+  const displayTemp = form.tempVal ? `${form.tempVal} C` : ''
+  const hasVitals = displayBP || displayO2 || displayHR || displayTemp
   const tabKey = tab === 'complaints' ? 'complaints' : tab === 'diagnosis' ? 'diagnosis' : 'remarks'
 
   return (
     <div className="accordion-record">
-
-      {/* ── Summary Row ── */}
       <div className="accordion-summary" onClick={() => setOpen(o => !o)}>
         <span className="accordion-date">{record.date}</span>
         <div className="accordion-actions" onClick={e => e.stopPropagation()}>
@@ -69,126 +79,99 @@ function AccordionRecord({ record, onDelete }) {
         </div>
       </div>
 
-      {/* ── Details Panel ── */}
       {open && (
         <div className="accordion-details">
           <div className="acc-details-layout">
-
-            {/* LEFT — Photo + Vitals */}
             <div className="acc-left">
-
-              {/* Clickable photo area */}
-              <div
-                className="acc-photo-area"
-                onClick={() => photoInputRef.current?.click()}
-                title="Click to upload a photo"
-              >
-                {form.photoUrl
-                  ? <img src={form.photoUrl} alt="Record" className="acc-photo-img" />
-                  : (
-                    <div className="acc-photo-placeholder">
-                      <svg width="40" height="40" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <rect x="5" y="12" width="60" height="48" rx="4" stroke="#9ca3af" strokeWidth="3" fill="none"/>
-                        <circle cx="35" cy="32" r="10" stroke="#9ca3af" strokeWidth="3" fill="none"/>
-                        <path d="M5 52 L20 38 L32 50 L47 35 L65 52" stroke="#9ca3af" strokeWidth="3" fill="none"/>
-                        <circle cx="58" cy="58" r="10" fill="#6b7280"/>
-                        <path d="M58 53v10M53 58h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                      </svg>
-                      <span>No Photo</span>
-                      <span className="acc-photo-hint">Click to upload</span>
-                    </div>
-                  )
-                }
+              <div className="acc-photo-wrap">
+                <button
+                  className="acc-photo-area"
+                  onClick={() => form.photoUrl && setZoomPhoto(true)}
+                  title={form.photoUrl ? 'Zoom photo' : 'No photo'}
+                  type="button"
+                >
+                  {form.photoUrl
+                    ? <img src={form.photoUrl} alt="Record" className="acc-photo-img" />
+                    : (
+                      <div className="acc-photo-placeholder">
+                        <svg width="40" height="40" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <rect x="5" y="12" width="60" height="48" rx="4" stroke="#9ca3af" strokeWidth="3" fill="none"/>
+                          <circle cx="35" cy="32" r="10" stroke="#9ca3af" strokeWidth="3" fill="none"/>
+                          <path d="M5 52 L20 38 L32 50 L47 35 L65 52" stroke="#9ca3af" strokeWidth="3" fill="none"/>
+                          <circle cx="58" cy="58" r="10" fill="#6b7280"/>
+                          <path d="M58 53v10M53 58h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
+                        </svg>
+                        <span>No Photo</span>
+                      </div>
+                    )
+                  }
+                </button>
+                {editMode && (
+                  <button className="acc-change-photo-btn" onClick={() => photoInputRef.current?.click()} type="button">
+                    Change Photo
+                  </button>
+                )}
               </div>
-              <input
-                ref={photoInputRef}
-                type="file"
-                accept="image/*"
-                style={{ display: 'none' }}
-                onChange={handlePhotoChange}
-              />
+              <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange}/>
 
-              {/* Vitals */}
               <div className="acc-vitals">
                 <div className="acc-vitals-title">Chief Complaints</div>
-
                 {editMode ? (
-                  /* EDIT MODE — nurse types value only, units are pre-labeled */
                   <div className="acc-vitals-edit">
                     <div className="acc-vital-row">
                       <span className="acc-vital-label">BP:</span>
-                      <input
-                        className="acc-vital-input"
-                        value={form.bpVal}
-                        onChange={e => update('bpVal', e.target.value)}
-                        placeholder="120/80"
-                        title="Enter blood pressure (e.g. 120/80)"
-                      />
+                      <input className="acc-vital-input" value={form.bpVal} onChange={e => update('bpVal', e.target.value)} placeholder="120/80" />
                       <span className="acc-vital-unit">mmhg</span>
                     </div>
                     <div className="acc-vital-row">
                       <span className="acc-vital-label">O2 Sat:</span>
-                      <input
-                        className="acc-vital-input"
-                        value={form.o2Val}
-                        onChange={e => update('o2Val', e.target.value)}
-                        placeholder="98"
-                        title="Enter oxygen saturation"
-                      />
+                      <input className="acc-vital-input" value={form.o2Val} onChange={e => update('o2Val', e.target.value)} placeholder="98" />
                       <span className="acc-vital-unit">%</span>
                     </div>
                     <div className="acc-vital-row">
                       <span className="acc-vital-label">HR:</span>
-                      <input
-                        className="acc-vital-input"
-                        value={form.hrVal}
-                        onChange={e => update('hrVal', e.target.value)}
-                        placeholder="72"
-                        title="Enter heart rate"
-                      />
+                      <input className="acc-vital-input" value={form.hrVal} onChange={e => update('hrVal', e.target.value)} placeholder="72" />
                       <span className="acc-vital-unit">bpm</span>
                     </div>
                     <div className="acc-vital-row">
                       <span className="acc-vital-label">Temp:</span>
-                      <input
-                        className="acc-vital-input"
-                        value={form.tempVal}
-                        onChange={e => update('tempVal', e.target.value)}
-                        placeholder="36.5"
-                        title="Enter temperature"
-                      />
-                      <span className="acc-vital-unit">°C</span>
+                      <input className="acc-vital-input" value={form.tempVal} onChange={e => update('tempVal', e.target.value)} placeholder="36.5" />
+                      <span className="acc-vital-unit">C</span>
                     </div>
                   </div>
                 ) : (
-                  /* VIEW MODE — show full formatted strings */
                   <div className="acc-vitals-display">
-                    {displayBP   && <p><strong>BP:</strong> {displayBP}</p>}
-                    {displayO2   && <p><strong>O2 sat:</strong> {displayO2}</p>}
-                    {displayHR   && <p><strong>HR:</strong> {displayHR}</p>}
+                    {displayBP && <p><strong>BP:</strong> {displayBP}</p>}
+                    {displayO2 && <p><strong>O2 sat:</strong> {displayO2}</p>}
+                    {displayHR && <p><strong>HR:</strong> {displayHR}</p>}
                     {displayTemp && <p><strong>Temp:</strong> {displayTemp}</p>}
-                    {!hasVitals  && <p className="acc-empty">No vitals recorded</p>}
+                    {!hasVitals && <p className="acc-empty">No vitals recorded</p>}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* RIGHT — Tabs + Content */}
             <div className="acc-right">
               <div className="acc-tabs">
                 <button className={`acc-tab ${tab === 'complaints' ? 'active' : ''}`} onClick={() => setTab('complaints')}>Chief Complaints</button>
-                <button className={`acc-tab ${tab === 'diagnosis'  ? 'active' : ''}`} onClick={() => setTab('diagnosis')}>Diagnosis</button>
-                <button className={`acc-tab ${tab === 'remarks'    ? 'active' : ''}`} onClick={() => setTab('remarks')}>Remarks</button>
+                <button className={`acc-tab ${tab === 'diagnosis' ? 'active' : ''}`} onClick={() => setTab('diagnosis')}>Diagnosis</button>
+                <button className={`acc-tab ${tab === 'remarks' ? 'active' : ''}`} onClick={() => setTab('remarks')}>Remarks</button>
               </div>
 
               <div className="acc-tab-content">
                 {editMode ? (
-                  <textarea
-                    className="acc-textarea"
-                    value={form[tabKey]}
-                    onChange={e => update(tabKey, e.target.value)}
-                    placeholder={`Enter ${tab}…`}
-                  />
+                  tab === 'diagnosis' ? (
+                    <select className="acc-select" value={form.diagnosis} onChange={e => update('diagnosis', e.target.value)}>
+                      <option value="">Select diagnosis</option>
+                      {diseases.map(disease => (
+                        <option key={disease.id} value={disease.name}>
+                          {disease.name}{disease.aliases?.length ? ` (${disease.aliases.join(', ')})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  ) : (
+                    <textarea className="acc-textarea" value={form[tabKey]} onChange={e => update(tabKey, e.target.value)} placeholder={`Enter ${tab}...`} />
+                  )
                 ) : (
                   <div className="acc-text-display">
                     {form[tabKey] || <span className="acc-empty">Nothing recorded yet.</span>}
@@ -198,13 +181,19 @@ function AccordionRecord({ record, onDelete }) {
 
               <div className="acc-edit-row">
                 {editMode
-                  ? <button className="acc-save-btn" onClick={() => setEditMode(false)}>Save</button>
+                  ? <button className="acc-save-btn" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
                   : <button className="acc-edit-btn" onClick={() => setEditMode(true)}>Edit</button>
                 }
               </div>
             </div>
-
           </div>
+        </div>
+      )}
+
+      {zoomPhoto && (
+        <div className="acc-photo-zoom" onClick={() => setZoomPhoto(false)}>
+          <button className="acc-photo-zoom-close" onClick={() => setZoomPhoto(false)}>x</button>
+          <img src={form.photoUrl} alt="Record" onClick={e => e.stopPropagation()} />
         </div>
       )}
     </div>

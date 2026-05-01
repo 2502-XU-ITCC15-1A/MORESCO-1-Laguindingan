@@ -3,20 +3,38 @@ import Modal from 'react-bootstrap/Modal'
 import './AddPatient.css'
 
 const STEPS = ['Basic Info', 'Address', 'Patient Photo']
+const HEIGHT_OPTIONS = Array.from({ length: 37 }, (_, i) => {
+  const totalInches = 48 + i
+  const feet = Math.floor(totalInches / 12)
+  const inches = totalInches % 12
+  return `${feet}'${inches}`
+})
 
 const INITIAL_FORM = {
   firstName: '', middleName: '', lastName: '',
   birthDate: '', position: '', status: 'Single',
-  height: '', weight: '', sex: 'Male',
+  height: '', weightValue: '', weightUnit: 'kg', sex: 'Male',
   permLine1: '', permLine2: '', permCity: '', permBarangay: '', permProvince: '',
   presLine1: '', presLine2: '', presCity: '', presBarangay: '', presProvince: '',
   photo: null, photoPreview: null,
+}
+
+function calculateBMI(height, weightValue, weightUnit) {
+  const weight = Number(weightValue)
+  const heightMatch = height.match(/^(\d+)'(\d+)$/)
+  if (!heightMatch || !weight || weight <= 0) return ''
+
+  const totalInches = Number(heightMatch[1]) * 12 + Number(heightMatch[2])
+  const heightM = totalInches * 0.0254
+  const weightKg = weightUnit === 'lb' ? weight * 0.45359237 : weight
+  return (weightKg / (heightM * heightM)).toFixed(1)
 }
 
 function AddPatient({ show, onClose, onAdd }) {
   const [step, setStep]   = useState(0)
   const [form, setForm]   = useState(INITIAL_FORM)
   const [errors, setErrors] = useState({})
+  const [saving, setSaving] = useState(false)
 
   function update(field, value) {
     setForm(f => ({ ...f, [field]: value }))
@@ -30,6 +48,8 @@ function AddPatient({ show, onClose, onAdd }) {
       if (!form.lastName.trim())   e.lastName   = 'Required'
       if (!form.birthDate)         e.birthDate  = 'Required'
       if (!form.position.trim())   e.position   = 'Required'
+      if (!form.height)            e.height     = 'Required'
+      if (!form.weightValue)       e.weightValue = 'Required'
     }
     if (step === 1) {
       if (!form.permLine1.trim())  e.permLine1  = 'Required'
@@ -59,24 +79,37 @@ function AddPatient({ show, onClose, onAdd }) {
     reader.readAsDataURL(file)
   }
 
-  function handleSubmit() {
-    onAdd({
-      firstName:   form.firstName,
-      middleName:  form.middleName,
-      lastName:    form.lastName,
-      birthDate:   form.birthDate,
-      position:    form.position,
-      status:      form.status,
-      height:      form.height,
-      weight:      form.weight,
-      sex:         form.sex,
-      permAddress: `${form.permLine1}${form.permLine2 ? ', ' + form.permLine2 : ''}, ${form.permCity}, ${form.permBarangay}, ${form.permProvince}`,
-      presAddress: `${form.presLine1}${form.presLine2 ? ', ' + form.presLine2 : ''}, ${form.presCity}, ${form.presBarangay}, ${form.presProvince}`,
-      photoPreview: form.photoPreview,
-    })
-    setForm(INITIAL_FORM)
-    setStep(0)
+  async function handleSubmit() {
+    setSaving(true)
     setErrors({})
+
+    const payload = new FormData()
+    payload.append('firstName', form.firstName)
+    payload.append('middleName', form.middleName)
+    payload.append('lastName', form.lastName)
+    payload.append('birthDate', form.birthDate)
+    payload.append('position', form.position)
+    payload.append('status', form.status)
+    payload.append('height', form.height)
+    payload.append('weight', `${form.weightValue}${form.weightUnit}`)
+    payload.append('sex', form.sex)
+    payload.append('permAddress', `${form.permLine1}${form.permLine2 ? ', ' + form.permLine2 : ''}, ${form.permCity}, ${form.permBarangay}, ${form.permProvince}`)
+    payload.append('presAddress', `${form.presLine1}${form.presLine2 ? ', ' + form.presLine2 : ''}, ${form.presCity}, ${form.presBarangay}, ${form.presProvince}`)
+    payload.append('bloodType', 'Unknown')
+    payload.append('allergies', '[]')
+    payload.append('chronicConditions', '[]')
+    if (form.photo) payload.append('photo', form.photo)
+
+    try {
+      await onAdd(payload)
+      setForm(INITIAL_FORM)
+      setStep(0)
+      setErrors({})
+    } catch (err) {
+      setErrors({ submit: err.message || 'Unable to save patient.' })
+    } finally {
+      setSaving(false)
+    }
   }
 
   function handleClose() {
@@ -85,6 +118,8 @@ function AddPatient({ show, onClose, onAdd }) {
     setErrors({})
     onClose()
   }
+
+  const bmi = calculateBMI(form.height, form.weightValue, form.weightUnit)
 
   return (
     <Modal show={show} onHide={handleClose} centered contentClassName="add-patient-modal-content" dialogClassName="add-patient-dialog">
@@ -138,12 +173,32 @@ function AddPatient({ show, onClose, onAdd }) {
 
             <div className="ap-row ap-three">
               <div className="ap-field">
-                <label>Height (e.g. 5'7)</label>
-                <input value={form.height} onChange={e => update('height', e.target.value)} placeholder="5'7"/>
+                <label>Height <span className="req">*</span></label>
+                <select value={form.height} onChange={e => update('height', e.target.value)} className={errors.height ? 'err' : ''}>
+                  <option value="">Select height</option>
+                  {HEIGHT_OPTIONS.map(height => <option key={height} value={height}>{height}</option>)}
+                </select>
+                {errors.height && <span className="ap-err">{errors.height}</span>}
               </div>
               <div className="ap-field">
-                <label>Weight (e.g. 70kg)</label>
-                <input value={form.weight} onChange={e => update('weight', e.target.value)} placeholder="70kg"/>
+                <label>Weight <span className="req">*</span></label>
+                <div className="ap-weight-row">
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.1"
+                    value={form.weightValue}
+                    onChange={e => update('weightValue', e.target.value)}
+                    placeholder="70.0"
+                    className={errors.weightValue ? 'err' : ''}
+                  />
+                  <select value={form.weightUnit} onChange={e => update('weightUnit', e.target.value)} aria-label="Weight unit">
+                    <option value="kg">kg</option>
+                    <option value="lb">lb</option>
+                  </select>
+                </div>
+                {errors.weightValue && <span className="ap-err">{errors.weightValue}</span>}
+                <span className="ap-bmi-preview">BMI: {bmi || '--'}</span>
               </div>
               <div className="ap-field">
                 <label>Sex</label>
@@ -258,14 +313,17 @@ function AddPatient({ show, onClose, onAdd }) {
         </div>
 
         <div className="ap-footer-btns">
+          {errors.submit && <span className="ap-err">{errors.submit}</span>}
           {step > 0 && (
-            <button className="ap-btn ap-btn-back" onClick={handleBack}>Back</button>
+            <button className="ap-btn ap-btn-back" onClick={handleBack} disabled={saving}>Back</button>
           )}
           {step < STEPS.length - 1 && (
-            <button className="ap-btn ap-btn-next" onClick={handleNext}>Next</button>
+            <button className="ap-btn ap-btn-next" onClick={handleNext} disabled={saving}>Next</button>
           )}
           {step === STEPS.length - 1 && (
-            <button className="ap-btn ap-btn-save" onClick={handleSubmit}>Save Patient</button>
+            <button className="ap-btn ap-btn-save" onClick={handleSubmit} disabled={saving}>
+              {saving ? 'Saving...' : 'Save Patient'}
+            </button>
           )}
         </div>
       </Modal.Footer>

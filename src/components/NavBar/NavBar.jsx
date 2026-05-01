@@ -1,57 +1,67 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
+import { recordsAPI } from '../../api/client.js'
+import morescoLogo from '../../assets/logo.png'
 import './NavBar.css'
 
-const NAV_LINKS = [
-  {
-    label: 'Patients',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-        <circle cx="9" cy="7" r="4"/>
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-      </svg>
-    ),
-    active: true,
-  },
-  {
-    label: 'Dashboard',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-        <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'Reports',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/>
-        <line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
-      </svg>
-    ),
-  },
-  {
-    label: 'Settings',
-    icon: (
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-      </svg>
-    ),
-  },
+const MONTHS = [
+  { value: '', label: 'All months' },
+  { value: '1', label: 'January' },
+  { value: '2', label: 'February' },
+  { value: '3', label: 'March' },
+  { value: '4', label: 'April' },
+  { value: '5', label: 'May' },
+  { value: '6', label: 'June' },
+  { value: '7', label: 'July' },
+  { value: '8', label: 'August' },
+  { value: '9', label: 'September' },
+  { value: '10', label: 'October' },
+  { value: '11', label: 'November' },
+  { value: '12', label: 'December' },
 ]
+
+function getCurrentUser() {
+  try {
+    return JSON.parse(localStorage.getItem('user')) || {}
+  } catch {
+    return {}
+  }
+}
 
 function NavBar() {
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [drawerTab, setDrawerTab] = useState('stats')
+  const [statsMonth, setStatsMonth] = useState('')
+  const [stats, setStats] = useState({ total: 0, stats: [] })
+  const [statsError, setStatsError] = useState('')
   const navigate = useNavigate()
+  const user = getCurrentUser()
+  const displayName = user.username === 'admin' ? 'Administrator' : user.username || 'Andrei Valdez'
+  const initials = displayName.split(/[.\s]+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'AV'
+
+  useEffect(() => {
+    if (!drawerOpen) return
+    let active = true
+
+    async function loadStats() {
+      setStatsError('')
+      try {
+        const data = await recordsAPI.getDiseaseStats({ month: statsMonth })
+        if (active) setStats(data)
+      } catch (err) {
+        if (active) setStatsError(err.message || 'Unable to load disease stats.')
+      }
+    }
+
+    loadStats()
+    return () => { active = false }
+  }, [drawerOpen, statsMonth])
 
   function handleLogout() {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
     setDrawerOpen(false)
     navigate('/login')
   }
@@ -59,15 +69,9 @@ function NavBar() {
   return (
     <>
       <nav className="nav-container">
-
-        {/* LEFT — Logo + System Name */}
         <div className="nav-left">
           <div className="nav-logo-circle">
-            <svg width="58" height="58" viewBox="0 0 58 58" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="29" cy="29" r="28" fill="#0D2B77" stroke="#4a9fff" strokeWidth="1.5"/>
-              <circle cx="29" cy="29" r="22" stroke="rgba(74,159,255,0.4)" strokeWidth="1" fill="none"/>
-              <text x="29" y="36" textAnchor="middle" fill="white" fontSize="18" fontWeight="bold" fontFamily="Arial">M1</text>
-            </svg>
+            <img src={morescoLogo} alt="MORESCO-1" />
           </div>
           <div className="nav-system-name">
             <h1>Moresco 1</h1>
@@ -75,47 +79,38 @@ function NavBar() {
           </div>
         </div>
 
-        {/* CENTER — Clickable Page Title Badge */}
         <div className="nav-center">
           <button
             className="nav-page-badge"
             onClick={() => setDrawerOpen(true)}
-            title="Open navigation menu"
+            title="Open dashboard drawer"
           >
             Patients
           </button>
         </div>
 
-        {/* RIGHT — User Profile */}
         <div className="nav-end">
-          <div className="nav-profile">
-            <span className="nav-profile-name">Andrei Valdez</span>
-            <span className="nav-profile-role">CEO of Nursing</span>
-          </div>
+          <button className="nav-profile" onClick={() => setDrawerOpen(true)} title="Open profile and stats">
+            <span className="nav-profile-name">{displayName}</span>
+            <span className="nav-profile-role">{user.role || 'CEO of Nursing'}</span>
+          </button>
         </div>
-
       </nav>
 
-      {/* ── MUI Right-Side Drawer ───────────────────────────── */}
       <Drawer
         anchor="right"
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         PaperProps={{ className: 'nav-drawer-paper' }}
       >
-        {/* Drawer Header */}
         <div className="drawer-header">
           <div className="drawer-logo-row">
-            <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="19" cy="19" r="18" fill="#0D2B77" stroke="#4a9fff" strokeWidth="1.2"/>
-              <text x="19" y="25" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="Arial">M1</text>
-            </svg>
+            <img src={morescoLogo} alt="MORESCO-1" className="drawer-logo-img" />
             <div>
               <p className="drawer-sys-name">Moresco 1</p>
               <p className="drawer-sys-sub">Employee Health Record System</p>
             </div>
           </div>
-          {/* Exit / Close Button */}
           <IconButton
             onClick={() => setDrawerOpen(false)}
             className="drawer-close-btn"
@@ -123,48 +118,83 @@ function NavBar() {
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
               <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6"  y1="6" x2="18" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </IconButton>
         </div>
 
-        <div className="drawer-divider" />
-
-        {/* Nav Links */}
-        <nav className="drawer-nav">
-          {NAV_LINKS.map(link => (
-            <button
-              key={link.label}
-              className={`drawer-nav-item ${link.active ? 'active' : ''}`}
-              onClick={() => setDrawerOpen(false)}
-            >
-              <span className="drawer-nav-icon">{link.icon}</span>
-              <span className="drawer-nav-label">{link.label}</span>
-              {link.active && <span className="drawer-active-dot" />}
-            </button>
-          ))}
-        </nav>
-
-        {/* Bottom — User Info + Logout */}
-        <div className="drawer-footer">
-          <div className="drawer-divider" />
-          <div className="drawer-user">
-            <div className="drawer-user-avatar">AV</div>
-            <div className="drawer-user-info">
-              <span className="drawer-user-name">Andrei Valdez</span>
-              <span className="drawer-user-role">CEO of Nursing</span>
-            </div>
-          </div>
-          <button className="drawer-logout-btn" onClick={handleLogout}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Logout
-          </button>
+        <div className="drawer-tabs">
+          <button className={drawerTab === 'stats' ? 'active' : ''} onClick={() => setDrawerTab('stats')}>Stats</button>
+          <button className={drawerTab === 'profile' ? 'active' : ''} onClick={() => setDrawerTab('profile')}>Profile</button>
         </div>
 
+        <div className="drawer-content">
+          {drawerTab === 'stats' && (
+            <>
+          <button className="drawer-nav-item active" onClick={() => setDrawerOpen(false)}>
+            <span className="drawer-nav-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+              </svg>
+            </span>
+            <span className="drawer-nav-label">Patients</span>
+            <span className="drawer-active-dot" />
+          </button>
+
+          <section className="drawer-stats">
+            <div className="drawer-stats-head">
+              <div>
+                <h2>Common Diseases</h2>
+                <p>{stats.total} record{stats.total === 1 ? '' : 's'} counted</p>
+              </div>
+              <select value={statsMonth} onChange={e => setStatsMonth(e.target.value)}>
+                {MONTHS.map(month => (
+                  <option key={month.value || 'all'} value={month.value}>{month.label}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="drawer-stats-list">
+              {statsError && <div className="drawer-stats-empty">{statsError}</div>}
+              {!statsError && stats.stats.length === 0 && (
+                <div className="drawer-stats-empty">No diagnosis data for this filter.</div>
+              )}
+              {!statsError && stats.stats.map(item => (
+                <div className="drawer-stat-row" key={item.name}>
+                  <div className="drawer-stat-meta">
+                    <span>{item.name}</span>
+                    <strong>{item.percentage}%</strong>
+                  </div>
+                  <div className="drawer-stat-bar">
+                    <span style={{ width: `${Math.max(item.percentage, 4)}%` }} />
+                  </div>
+                  <small>{item.count} case{item.count === 1 ? '' : 's'}</small>
+                </div>
+              ))}
+            </div>
+          </section>
+            </>
+          )}
+
+          {drawerTab === 'profile' && (
+            <section className="drawer-profile-tab">
+              <div className="drawer-user-avatar large">{initials}</div>
+              <h2>{displayName}</h2>
+              <p>{user.role || 'CEO of Nursing'}</p>
+              <button className="drawer-logout-btn standalone" onClick={handleLogout}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                  <polyline points="16 17 21 12 16 7"/>
+                  <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+                Logout
+              </button>
+            </section>
+          )}
+        </div>
       </Drawer>
     </>
   )

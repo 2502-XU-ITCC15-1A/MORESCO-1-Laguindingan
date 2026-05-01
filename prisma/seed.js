@@ -1,88 +1,129 @@
-import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcrypt';
-import { SAMPLE_PATIENTS } from '../src/data/patients.js';
+import { PrismaClient } from '@prisma/client'
+import bcrypt from 'bcrypt'
+import { SAMPLE_PATIENTS, SAMPLE_RECORDS } from '../src/data/patients.js'
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
+
+const USERS = [
+  { username: 'andrei.valdez', password: 'moresco2024', role: 'CEO of Nursing' },
+  { username: 'admin', password: 'admin123', role: 'Administrator' },
+  { username: 'nurse1', password: 'nurse123', role: 'Staff Nurse' },
+]
+
+const DISEASES = [
+  { name: 'Cough', aliases: ['Ubo'] },
+  { name: 'Fever', aliases: ['Lagnat'] },
+  { name: 'Hypertension', aliases: ['High blood pressure'] },
+  { name: 'Asthma', aliases: [] },
+  { name: 'Migraine', aliases: [] },
+  { name: 'Viral Syndrome', aliases: [] },
+]
+
+function toBloodEnum(value) {
+  const map = {
+    'A+': 'A_PLUS',
+    'A-': 'A_MINUS',
+    'B+': 'B_PLUS',
+    'B-': 'B_MINUS',
+    'AB+': 'AB_PLUS',
+    'AB-': 'AB_MINUS',
+    'O+': 'O_PLUS',
+    'O-': 'O_MINUS',
+  }
+  return map[value] || 'UNKNOWN'
+}
 
 async function main() {
-  console.log('🌱 Starting database seeding...');
+  console.log('Starting database seeding...')
 
-  // 1. Clear existing data (in correct order to avoid foreign key conflicts)
-  await prisma.healthRecord.deleteMany({});
-  await prisma.allergy.deleteMany({});
-  await prisma.chronicCondition.deleteMany({});
-  await prisma.patient.deleteMany({});
-  await prisma.user.deleteMany({});
-
-  // 2. Create a test admin user (password: admin123)
-  const hashedPassword = await bcrypt.hash('admin123', 10);
-  const adminUser = await prisma.user.create({
-    data: {
-      username: 'admin',
-      passwordHash: hashedPassword,
-      role: 'Administrator',
-    },
-  });
-  console.log(`✅ Created user: ${adminUser.username} (${adminUser.role})`);
-
-  // 3. Seed patients from your frontend data
-  for (const p of SAMPLE_PATIENTS) {
-    // Map the string blood type to Prisma enum
-    let bloodTypeEnum = 'UNKNOWN';
-    if (p.bloodType) {
-      const upper = p.bloodType.toUpperCase().replace('-', '_');
-      if (['A_PLUS', 'A_MINUS', 'B_PLUS', 'B_MINUS', 'AB_PLUS', 'AB_MINUS', 'O_PLUS', 'O_MINUS'].includes(upper)) {
-        bloodTypeEnum = upper;
-      }
-    }
-
-    // Parse birthDate – handle format like "April 17, 2004"
-    let birthDateObj = new Date(); // Default to now if parsing fails
-    if (p.birthDate) {
-      const parsed = new Date(p.birthDate);
-      if (!isNaN(parsed)) {
-        birthDateObj = parsed;
-      } else {
-        // Fallback: if a string like "YYYY-MM-DD" is provided
-        birthDateObj = new Date(p.birthDate);
-      }
-    }
-
-    const newPatient = await prisma.patient.create({
-      data: {
-        firstName: p.firstName,
-        middleName: p.middleName || '',
-        lastName: p.lastName,
-        idNumber: p.idNumber,
-        birthDate: birthDateObj,
-        position: p.position,
-        status: p.status,
-        sex: p.sex,
-        height: p.height || '',
-        weight: p.weight || '',
-        permAddress: p.permAddress || '',
-        presAddress: p.presAddress || '',
-        bloodType: bloodTypeEnum,
-        allergies: {
-          create: p.allergies.map((name) => ({ allergyName: name })),
-        },
-        chronicConditions: {
-          create: p.chronicConditions.map((name) => ({ conditionName: name })),
-        },
+  for (const user of USERS) {
+    const passwordHash = await bcrypt.hash(user.password, 10)
+    await prisma.user.upsert({
+      where: { username: user.username },
+      update: {
+        passwordHash,
+        role: user.role,
       },
-    });
-    console.log(`✅ Created patient: ${newPatient.firstName} ${newPatient.lastName} (ID: ${newPatient.idNumber})`);
+      create: {
+        username: user.username,
+        passwordHash,
+        role: user.role,
+      },
+    })
+    console.log(`Created user: ${user.username}`)
   }
 
-  console.log('🎉 Database seeding completed successfully!');
+  for (const disease of DISEASES) {
+    await prisma.disease.upsert({
+      where: { name: disease.name },
+      update: { aliases: disease.aliases, active: true },
+      create: disease,
+    })
+  }
+  console.log('Seeded disease dictionary.')
+
+  const patientCount = await prisma.patient.count()
+  if (patientCount > 0) {
+    console.log('Patients already exist. Skipping sample patient seed.')
+    return
+  }
+
+  for (const [index, patient] of SAMPLE_PATIENTS.entries()) {
+    const created = await prisma.patient.create({
+      data: {
+        firstName: patient.firstName,
+        middleName: patient.middleName || null,
+        lastName: patient.lastName,
+        idNumber: patient.idNumber,
+        birthDate: new Date(patient.birthDate),
+        position: patient.position,
+        status: patient.status,
+        sex: patient.sex,
+        height: patient.height || '',
+        weight: patient.weight || '',
+        permAddress: patient.permAddress || '',
+        presAddress: patient.presAddress || '',
+        bloodType: toBloodEnum(patient.bloodType),
+        allergies: {
+          create: (patient.allergies || []).map(allergyName => ({ allergyName })),
+        },
+        chronicConditions: {
+          create: (patient.chronicConditions || []).map(conditionName => ({ conditionName })),
+        },
+      },
+    })
+
+    if (index === 0) {
+      for (const record of SAMPLE_RECORDS) {
+        await prisma.healthRecord.create({
+          data: {
+            patientId: created.id,
+            recordDate: new Date(record.date),
+            bpVal: record.bpVal,
+            o2Val: record.o2Val,
+            hrVal: record.hrVal,
+            tempVal: record.tempVal,
+            complaints: record.complaints,
+            diagnosis: record.diagnosis,
+            remarks: record.remarks,
+            photoUrl: record.photoUrl,
+          },
+        })
+      }
+    }
+
+    console.log(`Created patient: ${created.firstName} ${created.lastName}`)
+  }
+
+  console.log('Database seeding completed.')
 }
 
 main()
-  .catch((e) => {
-    console.error('❌ Seeding failed:');
-    console.error(e);
-    process.exit(1);
+  .catch((error) => {
+    console.error('Seeding failed:')
+    console.error(error)
+    process.exit(1)
   })
   .finally(async () => {
-    await prisma.$disconnect();
-  });
+    await prisma.$disconnect()
+  })

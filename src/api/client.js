@@ -29,7 +29,7 @@ async function apiClient(endpoint, options = {}) {
     try {
       const errorData = await res.json();
       if (errorData.message) errorMessage = errorData.message;
-    } catch (_) {
+    } catch {
       errorMessage = res.statusText || 'API Error';
     }
     throw new Error(errorMessage);
@@ -39,3 +39,42 @@ async function apiClient(endpoint, options = {}) {
 }
 
 export default apiClient;
+
+export const authAPI = {
+  login: (username, password) =>
+    apiClient('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ username, password }),
+    }),
+};
+
+export const patientsAPI = {
+  getAll: () => apiClient('/patients'),
+  getOne: (id) => apiClient(`/patients/${id}`),
+  create: (formData) => apiClient('/patients', { method: 'POST', body: formData }),
+  update: (id, formData) => apiClient(`/patients/${id}`, { method: 'PUT', body: formData }),
+  delete: (id) => apiClient(`/patients/${id}`, { method: 'DELETE' }),
+};
+
+export const recordsAPI = {
+  getAll: (patientId, filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    return apiClient(`/records/${patientId}${params ? `?${params}` : ''}`);
+  },
+  create: (patientId, formData) => apiClient(`/records/${patientId}`, { method: 'POST', body: formData }),
+  update: (recordId, formData) => apiClient(`/records/${recordId}`, { method: 'PUT', body: formData }),
+  delete: (recordId) => apiClient(`/records/${recordId}`, { method: 'DELETE' }),
+  getDiseaseStats: (filters = {}) => {
+    const params = new URLSearchParams(filters).toString();
+    return apiClient(`/records/stats/diseases${params ? `?${params}` : ''}`);
+  },
+};
+
+export const diseasesAPI = {
+  getAll: () => apiClient('/diseases'),
+  create: (data) => apiClient('/diseases', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  delete: (id) => apiClient(`/diseases/${id}`, { method: 'DELETE' }),
+};

@@ -2,7 +2,7 @@ import { useState } from 'react'
 import PatientInfo from '../MODALS/PatientInfo/PatientInfo.jsx'
 import './Patient.css'
 
-function Patient({ patient }) {
+function Patient({ patient, onPatientUpdated, onDelete, canDelete }) {
   const [showInfo, setShowInfo] = useState(false)
 
   const displayName = `${patient.firstName} ${patient.lastName}`
@@ -10,6 +10,18 @@ function Patient({ patient }) {
   return (
     <>
       <div className="patient-card" onClick={() => setShowInfo(true)}>
+        {canDelete && (
+          <button
+            className="patient-delete-btn"
+            onClick={(e) => {
+              e.stopPropagation()
+              onDelete?.(patient.id)
+            }}
+            title="Delete patient"
+          >
+            x
+          </button>
+        )}
         {/* Avatar */}
         <div className="patient-avatar">
           <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
@@ -30,6 +42,7 @@ function Patient({ patient }) {
         show={showInfo}
         onClose={() => setShowInfo(false)}
         patient={patient}
+        onPatientUpdated={onPatientUpdated}
       />
     </>
   )

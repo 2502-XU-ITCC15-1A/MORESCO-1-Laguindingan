@@ -1,24 +1,17 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { authAPI } from '../../api/client.js'
 import moresco1Logo from '../../assets/logo.png'
 import './Login.css'
-
-// ── Accounts — add or edit users here ──────────────────────
-const ACCOUNTS = [
-  { username: 'andrei.valdez',  password: 'moresco2024', role: 'CEO of Nursing' },
-  { username: 'admin',          password: 'admin123',    role: 'Administrator'  },
-  { username: 'nurse1',         password: 'nurse123',    role: 'Staff Nurse'    },
-]
-// ───────────────────────────────────────────────────────────
 
 function Login() {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError]       = useState('')
-  const [loading, setLoading]   = useState(false)
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault()
     setError('')
 
@@ -28,24 +21,21 @@ function Login() {
     }
 
     setLoading(true)
-    setTimeout(() => {
+    try {
+      const { token, user } = await authAPI.login(username.trim(), password)
+      localStorage.setItem('token', token)
+      localStorage.setItem('user', JSON.stringify(user))
+      navigate('/patients')
+    } catch (err) {
+      setError(err.message || 'Invalid username or password.')
+    } finally {
       setLoading(false)
-      const match = ACCOUNTS.find(
-        a => a.username === username.trim() && a.password === password
-      )
-      if (match) {
-        navigate('/patients')
-      } else {
-        setError('Invalid username or password.')
-      }
-    }, 700)
+    }
   }
 
   return (
     <div className="login-bg">
       <div className="login-card">
-
-        {/* Header — real logo.png */}
         <div className="login-header">
           <div className="login-logo-wrap">
             <img src={moresco1Logo} alt="Moresco 1 Logo" className="login-logo-img" />
@@ -58,7 +48,6 @@ function Login() {
 
         <div className="login-divider" />
 
-        {/* Form */}
         <form className="login-form" onSubmit={handleLogin}>
           <div className="login-field">
             <label className="login-label">Username:</label>
@@ -87,11 +76,10 @@ function Login() {
 
           <div className="login-btn-wrap">
             <button className="login-btn" type="submit" disabled={loading}>
-              {loading ? 'Logging in…' : 'Login'}
+              {loading ? 'Logging in...' : 'Login'}
             </button>
           </div>
         </form>
-
       </div>
     </div>
   )

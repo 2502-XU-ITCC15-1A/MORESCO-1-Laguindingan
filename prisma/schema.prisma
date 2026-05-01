@@ -97,3 +97,14 @@ model ChronicCondition {
 
   @@map("chronic_conditions")
 }
+
+model Disease {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  aliases   String[] @default([])
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("diseases")
+}

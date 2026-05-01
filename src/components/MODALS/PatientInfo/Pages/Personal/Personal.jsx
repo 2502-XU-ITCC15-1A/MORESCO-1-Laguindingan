@@ -1,13 +1,13 @@
 import './Personal.css'
 
-// Auto-calculate BMI from height (5'7 format) and weight (70kg format)
 function calculateBMI(height, weight) {
   if (!height || !weight) return null
 
-  const weightKg = parseFloat(weight.replace(/[^0-9.]/g, ''))
+  const rawWeight = String(weight).toLowerCase()
+  const weightValue = parseFloat(rawWeight.replace(/[^0-9.]/g, ''))
+  const weightKg = rawWeight.includes('lb') ? weightValue * 0.45359237 : weightValue
   if (isNaN(weightKg) || weightKg <= 0) return null
 
-  // Try feet'inches format e.g. "5'7" or "5'10"
   const feetInch = height.match(/(\d+)'(\d+)/)
   if (feetInch) {
     const totalInches = parseInt(feetInch[1]) * 12 + parseInt(feetInch[2])
@@ -15,7 +15,6 @@ function calculateBMI(height, weight) {
     return (weightKg / (heightM * heightM)).toFixed(1)
   }
 
-  // Try cm format e.g. "170cm" or "170"
   const cm = height.match(/(\d+(?:\.\d+)?)\s*cm?/i)
   if (cm) {
     const heightM = parseFloat(cm[1]) / 100

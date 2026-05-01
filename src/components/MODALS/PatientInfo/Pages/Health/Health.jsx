@@ -47,13 +47,23 @@ function TagList({ items, onAdd, onRemove, placeholder, editMode }) {
 
 function Health({ healthData, onUpdate }) {
   const [editMode, setEditMode]   = useState(false)
+  const [saving, setSaving]       = useState(false)
+  const [error, setError]         = useState('')
   const [allergies, setAllergies] = useState(healthData?.allergies         || [])
   const [conditions, setConditions] = useState(healthData?.chronicConditions || [])
   const [bloodType, setBloodType] = useState(healthData?.bloodType          || 'Unknown')
 
-  function handleSave() {
-    if (onUpdate) onUpdate({ allergies, chronicConditions: conditions, bloodType })
-    setEditMode(false)
+  async function handleSave() {
+    setSaving(true)
+    setError('')
+    try {
+      if (onUpdate) await onUpdate({ allergies, chronicConditions: conditions, bloodType })
+      setEditMode(false)
+    } catch (err) {
+      setError(err.message || 'Unable to save health information.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   function handleCancel() {
@@ -74,13 +84,17 @@ function Health({ healthData, onUpdate }) {
             {editMode ? (
               <>
                 <button className="health-cancel-btn" onClick={handleCancel}>Cancel</button>
-                <button className="health-save-btn" onClick={handleSave}>Save</button>
+                <button className="health-save-btn" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
               </>
             ) : (
               <button className="health-edit-btn" onClick={() => setEditMode(true)}>Edit</button>
             )}
           </div>
         </div>
+
+        {error && <div className="health-tag-empty">{error}</div>}
 
         {/* Blood Type */}
         <div className="health-field">

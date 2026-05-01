@@ -1,5 +1,5 @@
 .add-patient-dialog {
-  max-width: 700px !important;
+  max-width: min(900px, calc(100vw - 32px)) !important;
 }
 
 .add-patient-modal-content {
@@ -7,6 +7,7 @@
   border-radius: 8px;
   border: none;
   overflow: hidden;
+  max-height: calc(100vh - 48px);
 }
 
 .add-patient-header {
@@ -26,6 +27,8 @@
 .add-patient-body {
   padding: 24px !important;
   min-height: 320px;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .add-patient-footer {
@@ -76,6 +79,10 @@
   transition: border-color 0.2s;
 }
 
+.ap-field select.err {
+  border-color: #ef4444;
+}
+
 .ap-field input:focus,
 .ap-field select:focus {
   border-color: #00006F;
@@ -84,6 +91,24 @@
 
 .ap-field input.err {
   border-color: #ef4444;
+}
+
+.ap-weight-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 74px;
+  gap: 8px;
+}
+
+.ap-weight-row input,
+.ap-weight-row select {
+  width: 100%;
+}
+
+.ap-bmi-preview {
+  min-height: 14px;
+  font-size: 11px;
+  color: #374151;
+  font-weight: 700;
 }
 
 .ap-err {
@@ -116,7 +141,7 @@
 /* Address Cols */
 .ap-address-cols {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 24px;
 }
 
@@ -236,6 +261,9 @@
 .ap-footer-btns {
   display: flex;
   gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .ap-btn {
@@ -265,3 +293,17 @@
 
 .ap-btn-next:hover,
 .ap-btn-save:hover { opacity: 0.85; }
+
+@media (max-width: 760px) {
+  .ap-three,
+  .ap-two,
+  .ap-address-cols {
+    grid-template-columns: 1fr;
+  }
+
+  .add-patient-footer {
+    gap: 12px;
+    align-items: flex-start !important;
+    flex-direction: column;
+  }
+}

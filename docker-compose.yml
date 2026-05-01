@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: moresco-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: moresco_health
+      POSTGRES_USER: moresco
+      POSTGRES_PASSWORD: moresco_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U moresco -d moresco_health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    container_name: moresco-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://moresco:moresco_password@db:5432/moresco_health?schema=public
+      JWT_SECRET: change-this-secret-before-production
+      JWT_EXPIRES_IN: 8h
+      PORT: 5000
+      CLIENT_ORIGIN: http://localhost:5173
+      NODE_ENV: production
+    ports:
+      - "5173:5000"
+    volumes:
+      - uploads_data:/app/uploads
+
+volumes:
+  postgres_data:
+  uploads_data:
