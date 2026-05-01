@@ -175,7 +175,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
           </svg>
           <div>
             <div className="pi-header-sysname">Moresco 1</div>
-            <div className="pi-header-syssub">Employee Health Record System</div>
+            <div className="pi-header-syssub">Employee Health Information Tracking and Management System</div>
           </div>
         </div>
 
