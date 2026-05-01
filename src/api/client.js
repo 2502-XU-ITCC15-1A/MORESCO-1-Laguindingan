@@ -2,14 +2,22 @@ const API_BASE = '/api';
 
 async function apiClient(endpoint, options = {}) {
   const token = localStorage.getItem('token');
+  
+  // Start with user-provided headers
   const headers = {
     ...options.headers,
   };
+
+  // Add Authorization if token exists
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
   }
-  // Note: Do NOT add 'Content-Type': 'application/json' here.
-  // FormData in Step 8 will automatically set its own Content-Type.
+
+  // ✅ CRITICAL FIX: Set Content-Type for JSON requests only
+  // If body is FormData, let the browser set the correct multipart header
+  if (options.body && !(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
@@ -17,13 +25,11 @@ async function apiClient(endpoint, options = {}) {
   });
   
   if (!res.ok) {
-    // Attempt to parse error message from server
     let errorMessage = 'Request failed';
     try {
       const errorData = await res.json();
       if (errorData.message) errorMessage = errorData.message;
     } catch (_) {
-      // Fallback if body is not JSON
       errorMessage = res.statusText || 'API Error';
     }
     throw new Error(errorMessage);
