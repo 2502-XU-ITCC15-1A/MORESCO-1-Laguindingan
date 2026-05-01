@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BloodType {
+  A_PLUS
+  A_MINUS
+  B_PLUS
+  B_MINUS
+  AB_PLUS
+  AB_MINUS
+  O_PLUS
+  O_MINUS
+  UNKNOWN
+
+  @@map("blood_type_enum")
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  passwordHash String
+  role         String
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model Patient {
+  id                Int               @id @default(autoincrement())
+  firstName         String            @map("first_name")
+  middleName        String?           @map("middle_name")
+  lastName          String            @map("last_name")
+  idNumber          String            @unique @map("id_number")
+  birthDate         DateTime          @map("birth_date")
+  position          String
+  status            String
+  sex               String
+  height            String?
+  weight            String?
+  permAddress       String?           @map("perm_address")
+  presAddress       String?           @map("pres_address")
+  photoUrl          String?           @map("photo_url")
+  bloodType         BloodType?        @default(UNKNOWN) @map("blood_type")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  healthRecords     HealthRecord[]
+  allergies         Allergy[]
+  chronicConditions ChronicCondition[]
+
+  @@map("patients")
+}
+
+model HealthRecord {
+  id         Int      @id @default(autoincrement())
+  patientId  Int      @map("patient_id")
+  recordDate DateTime @map("record_date")
+  bpVal      String?  @map("bp_val")
+  o2Val      String?  @map("o2_val")
+  hrVal      String?  @map("hr_val")
+  tempVal    String?  @map("temp_val")
+  complaints String?
+  diagnosis  String?
+  remarks    String?
+  photoUrl   String?  @map("photo_url")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("health_records")
+}
+
+model Allergy {
+  id          Int    @id @default(autoincrement())
+  patientId   Int    @map("patient_id")
+  allergyName String @map("allergy_name")
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("allergies")
+}
+
+model ChronicCondition {
+  id            Int    @id @default(autoincrement())
+  patientId     Int    @map("patient_id")
+  conditionName String @map("condition_name")
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("chronic_conditions")
+}
