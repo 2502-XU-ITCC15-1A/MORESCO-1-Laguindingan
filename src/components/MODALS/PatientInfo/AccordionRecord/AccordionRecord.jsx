@@ -6,8 +6,7 @@ function extractValue(str) {
   return str.replace(/\s*(mmhg|bpm|%|c)\s*/gi, '').trim()
 }
 
-function AccordionRecord({ record, onDelete, onSave, diseases = [] }) {
-  const [open, setOpen] = useState(false)
+function AccordionRecord({ record, isOpen = false, onToggle, onDelete, onSave, diseases = [] }) {
   const [tab, setTab] = useState('complaints')
   const [editMode, setEditMode] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -58,11 +57,11 @@ function AccordionRecord({ record, onDelete, onSave, diseases = [] }) {
   const tabKey = tab === 'complaints' ? 'complaints' : tab === 'diagnosis' ? 'diagnosis' : 'remarks'
 
   return (
-    <div className="accordion-record">
-      <div className="accordion-summary" onClick={() => setOpen(o => !o)}>
+    <div className={`accordion-record ${isOpen ? 'open' : ''}`}>
+      <div className="accordion-summary" onClick={onToggle}>
         <span className="accordion-date">{record.date}</span>
         <div className="accordion-actions" onClick={e => e.stopPropagation()}>
-          <button className="acc-icon-btn" title="Delete" onClick={onDelete}>
+          <button className="acc-icon-btn" title="Delete" aria-label={`Delete health record from ${record.date}`} onClick={onDelete}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <polyline points="3 6 5 6 21 6"/>
               <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
@@ -70,16 +69,22 @@ function AccordionRecord({ record, onDelete, onSave, diseases = [] }) {
               <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
             </svg>
           </button>
-          <button className="acc-icon-btn" title={open ? 'Collapse' : 'Expand'}>
+          <button
+            className="acc-icon-btn"
+            title={isOpen ? 'Collapse' : 'Expand'}
+            aria-label={`${isOpen ? 'Collapse' : 'Expand'} health record from ${record.date}`}
+            aria-expanded={isOpen}
+            onClick={onToggle}
+          >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-              style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
+              style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </button>
         </div>
       </div>
 
-      {open && (
+      {isOpen && (
         <div className="accordion-details">
           <div className="acc-details-layout">
             <div className="acc-left">
@@ -88,6 +93,7 @@ function AccordionRecord({ record, onDelete, onSave, diseases = [] }) {
                   className="acc-photo-area"
                   onClick={() => form.photoUrl && setZoomPhoto(true)}
                   title={form.photoUrl ? 'Zoom photo' : 'No photo'}
+                  aria-label={form.photoUrl ? `Zoom record photo from ${record.date}` : `Health record from ${record.date} has no photo`}
                   type="button"
                 >
                   {form.photoUrl
@@ -192,7 +198,7 @@ function AccordionRecord({ record, onDelete, onSave, diseases = [] }) {
 
       {zoomPhoto && (
         <div className="acc-photo-zoom" onClick={() => setZoomPhoto(false)}>
-          <button className="acc-photo-zoom-close" onClick={() => setZoomPhoto(false)}>x</button>
+          <button className="acc-photo-zoom-close" onClick={() => setZoomPhoto(false)} aria-label="Close record photo zoom">x</button>
           <img src={form.photoUrl} alt="Record" onClick={e => e.stopPropagation()} />
         </div>
       )}

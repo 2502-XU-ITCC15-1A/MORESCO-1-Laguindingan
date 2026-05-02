@@ -4,6 +4,7 @@ import { diseasesAPI, patientsAPI, recordsAPI } from '../../../api/client.js'
 import AccordionRecord from './AccordionRecord/AccordionRecord.jsx'
 import Personal from './Pages/Personal/Personal.jsx'
 import Health from './Pages/Health/Health.jsx'
+import morescoLogo from '../../../assets/logo.png'
 import './PatientInfo.css'
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
@@ -17,6 +18,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
   const [recordError, setRecordError] = useState('')
   const [zoomPhoto, setZoomPhoto] = useState(false)
   const [diseases, setDiseases] = useState([])
+  const [openRecordId, setOpenRecordId] = useState(null)
   const patientPhotoInputRef = useRef(null)
   const [patientHealth, setPatientHealth] = useState({
     allergies: patient?.allergies || [],
@@ -34,6 +36,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
       try {
         const data = await recordsAPI.getAll(patient.id)
         if (active) setRecords(data)
+        if (active) setOpenRecordId(null)
       } catch (err) {
         if (active) setRecordError(err.message || 'Unable to load records.')
       } finally {
@@ -74,6 +77,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
   async function handleDeleteRecord(id) {
     await recordsAPI.delete(id)
     setRecords(prev => prev.filter(r => r.id !== id))
+    setOpenRecordId(current => current === id ? null : current)
   }
 
   async function handleAddRecord() {
@@ -90,6 +94,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
 
     const created = await recordsAPI.create(patient.id, payload)
     setRecords(prev => [created, ...prev])
+    setOpenRecordId(created.id)
   }
 
   async function handleSaveRecord(recordId, form, photoFile) {
@@ -169,10 +174,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
     >
       <div className="pi-modal-header">
         <div className="pi-header-left">
-          <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="20" cy="20" r="19" fill="#0D2B77" stroke="#4a9fff" strokeWidth="1.2"/>
-            <text x="20" y="26" textAnchor="middle" fill="white" fontSize="12" fontWeight="bold" fontFamily="Arial">M1</text>
-          </svg>
+          <img className="pi-header-logo" src={morescoLogo} alt="MORESCO-1 logo" />
           <div>
             <div className="pi-header-sysname">Moresco 1</div>
             <div className="pi-header-syssub">Employee Health Information Tracking and Management System</div>
@@ -202,6 +204,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
                 className="pi-profile-avatar"
                 onClick={() => patient.photoPreview && setZoomPhoto(true)}
                 title={patient.photoPreview ? 'Zoom patient photo' : 'No patient photo'}
+                aria-label={patient.photoPreview ? `Zoom ${displayName} photo` : `${displayName} has no patient photo`}
                 type="button"
               >
                 {patient.photoPreview
@@ -218,7 +221,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
                 <h2>{displayName}</h2>
                 <p>{patient.position}</p>
                 <span>{patient.idNumber}</span>
-                <button className="pi-change-photo-btn" onClick={() => patientPhotoInputRef.current?.click()}>
+                <button className="pi-change-photo-btn" onClick={() => patientPhotoInputRef.current?.click()} type="button">
                   Change Photo
                 </button>
                 <input
@@ -250,15 +253,15 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
           <div className="pi-right">
             <div className="pi-records-header">
               <h3 className="pi-records-title">Health Records</h3>
-              <button className="pi-new-btn" onClick={handleAddRecord}>New</button>
+              <button className="pi-new-btn" onClick={handleAddRecord} aria-label="Create new health record">New</button>
               <div className="pi-records-filters">
-                <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)}>
+                <select value={filterMonth} onChange={e => setFilterMonth(e.target.value)} aria-label="Filter records by month">
                   <option value="">Month</option>
                   {MONTH_NAMES.map((m, i) => (
                     <option key={m} value={String(i + 1)}>{m}</option>
                   ))}
                 </select>
-                <select value={filterYear} onChange={e => setFilterYear(e.target.value)}>
+                <select value={filterYear} onChange={e => setFilterYear(e.target.value)} aria-label="Filter records by year">
                   <option value="">Year</option>
                   {years.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
@@ -273,6 +276,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
                   <AccordionRecord
                     key={record.id}
                     record={record}
+                    isOpen={openRecordId === record.id}
+                    onToggle={() => setOpenRecordId(current => current === record.id ? null : record.id)}
                     onDelete={() => handleDeleteRecord(record.id)}
                     onSave={(form, photoFile) => handleSaveRecord(record.id, form, photoFile)}
                     diseases={diseases}

@@ -212,6 +212,12 @@
   object-fit: cover;
 }
 
+.ap-photo-err {
+  margin-top: 8px;
+  text-align: center;
+  font-weight: 700;
+}
+
 /* Step Indicator */
 .ap-step-indicator {
   display: flex;

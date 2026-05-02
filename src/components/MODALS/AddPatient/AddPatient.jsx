@@ -57,6 +57,9 @@ function AddPatient({ show, onClose, onAdd }) {
       if (!form.presLine1.trim())  e.presLine1  = 'Required'
       if (!form.presCity.trim())   e.presCity   = 'Required'
     }
+    if (step === 2) {
+      if (!form.photo) e.photo = 'Patient photo is required'
+    }
     setErrors(e)
     return Object.keys(e).length === 0
   }
@@ -80,6 +83,8 @@ function AddPatient({ show, onClose, onAdd }) {
   }
 
   async function handleSubmit() {
+    if (!validateStep()) return
+
     setSaving(true)
     setErrors({})
 
@@ -295,6 +300,7 @@ function AddPatient({ show, onClose, onAdd }) {
                 )
               }
             </label>
+            {errors.photo && <span className="ap-err ap-photo-err">{errors.photo}</span>}
             <input id="photo-input" type="file" accept="image/*" style={{display:'none'}} onChange={handlePhotoChange}/>
           </div>
         )}
