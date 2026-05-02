@@ -8,14 +8,8 @@
     url("https://moresco1.com/wp-content/uploads/2025/11/ChatGPT-Image-Nov-6-2025-02_51_02-PM.png");
   background-size: cover;
   background-position: center;
-  animation: bgZoom 16s ease-in-out infinite;
   position: relative;
   padding: 16px 24px 0;
-}
-
-@keyframes bgZoom {
-  0%, 100% { background-size: 100%; }
-  50%       { background-size: 112%; }
 }
 
 /* Toolbar */

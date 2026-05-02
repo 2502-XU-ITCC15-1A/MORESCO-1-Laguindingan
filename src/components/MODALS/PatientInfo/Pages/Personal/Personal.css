@@ -1,17 +1,18 @@
 .personal-container {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .personal-section {
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 10px;
-  padding: 12px;
+  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
 }
 
 .personal-section-title {
@@ -25,19 +26,22 @@
 
 .info-grid {
   display: grid;
-  gap: 6px;
+  gap: 7px;
 }
 
-.info-three { grid-template-columns: repeat(3, 1fr); }
+.info-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .info-one   { grid-template-columns: repeat(1, 1fr); }
 
 .info-box {
-  background: #00006F;
+  background: linear-gradient(180deg, #00006F 0%, #0D2B77 100%);
   border-radius: 6px;
-  padding: 8px 10px;
+  padding: 10px 11px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 4px;
+  min-width: 0;
+  min-height: 62px;
+  justify-content: center;
 }
 
 .info-box-label {
@@ -51,14 +55,19 @@
 .info-box-value-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 4px;
+  justify-content: flex-start;
+  gap: 7px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
 .info-box-value {
   font-size: 13px;
+  line-height: 1.25;
   color: white;
   font-weight: 600;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .info-box-badge {
@@ -68,11 +77,13 @@
   border-radius: 10px;
   font-weight: 700;
   white-space: nowrap;
+  line-height: 1.2;
+  flex-shrink: 0;
 }
 
 /* Address */
 .addr-box {
-  background: #00006F;
+  background: linear-gradient(180deg, #00006F 0%, #0D2B77 100%);
   border-radius: 6px;
   padding: 8px 10px;
   display: flex;
@@ -93,4 +104,5 @@
   color: white;
   font-weight: 500;
   line-height: 1.4;
+  overflow-wrap: anywhere;
 }

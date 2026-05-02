@@ -94,17 +94,19 @@ function PatientGrid() {
   }
 
   return (
-    <div className="main-content">
+    <main className="main-content">
       <div className="grid-toolbar">
         <input
           className="grid-search"
           type="text"
+          aria-label="Search patients"
           placeholder="Search patient name, ID, or position..."
           value={search}
           onChange={e => { setSearch(e.target.value); setCurrentPage(1) }}
         />
         <select
           className="grid-sort"
+          aria-label="Sort patients"
           value={sort}
           onChange={e => { setSort(e.target.value); setCurrentPage(1) }}
         >
@@ -137,6 +139,7 @@ function PatientGrid() {
             className="page-btn"
             disabled={safePage === 1}
             onClick={() => setCurrentPage(p => p - 1)}
+            aria-label="Previous page"
           >&lt;</button>
 
           {getPageNumbers().map((page, i) =>
@@ -146,6 +149,8 @@ function PatientGrid() {
                   key={page}
                   className={`page-btn ${safePage === page ? 'active' : ''}`}
                   onClick={() => setCurrentPage(page)}
+                  aria-label={`Go to page ${page}`}
+                  aria-current={safePage === page ? 'page' : undefined}
                 >{page}</button>
           )}
 
@@ -153,6 +158,7 @@ function PatientGrid() {
             className="page-btn"
             disabled={safePage === totalPages}
             onClick={() => setCurrentPage(p => p + 1)}
+            aria-label="Next page"
           >&gt;</button>
         </div>
       </div>
@@ -170,7 +176,15 @@ function PatientGrid() {
             </button>
           </div>
         )}
-        <button className="fab-add" onClick={() => setSpeedDialOpen(open => !open)} title="Actions">+</button>
+        <button
+          className="fab-add"
+          onClick={() => setSpeedDialOpen(open => !open)}
+          title="Actions"
+          aria-label={speedDialOpen ? 'Close actions menu' : 'Open actions menu'}
+          aria-expanded={speedDialOpen}
+        >
+          +
+        </button>
       </div>
 
       <AddPatient
@@ -182,7 +196,7 @@ function PatientGrid() {
         show={showDiseaseModal}
         onClose={() => setShowDiseaseModal(false)}
       />
-    </div>
+    </main>
   )
 }
 
