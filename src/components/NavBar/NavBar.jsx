@@ -75,7 +75,7 @@ function NavBar() {
           </div>
           <div className="nav-system-name">
             <h1>Moresco 1</h1>
-            <p>Employee Health Record System</p>
+            <p>Employee Health Information Tracking and Management System</p>
           </div>
         </div>
 
@@ -108,7 +108,7 @@ function NavBar() {
             <img src={morescoLogo} alt="MORESCO-1" className="drawer-logo-img" />
             <div>
               <p className="drawer-sys-name">Moresco 1</p>
-              <p className="drawer-sys-sub">Employee Health Record System</p>
+              <p className="drawer-sys-sub">Employee Health Information Tracking and Management System</p>
             </div>
           </div>
           <IconButton
