@@ -20,34 +20,54 @@
   padding: 18px !important;
 }
 
+/* ─── FIXED FORM LAYOUT ─── */
 .disease-form {
-  display: grid;
-  grid-template-columns: 1fr 1fr auto;
+  display: flex;
   gap: 10px;
   margin-bottom: 14px;
+  align-items: center;
 }
 
 .disease-form input {
+  flex: 1;
+  height: 42px;
+  padding: 0 12px;
   border: 1px solid #d1d5db;
   border-radius: 6px;
-  padding: 9px 10px;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s;
 }
 
-.disease-form button,
-.disease-item button {
-  border: none;
-  border-radius: 6px;
-  padding: 9px 14px;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: inherit;
+.disease-form input:focus {
+  border-color: #00006F;
+  box-shadow: 0 0 0 3px rgba(0, 0, 111, 0.1);
 }
 
 .disease-form button {
+  height: 42px;
+  padding: 0 24px;
   background: #00006F;
   color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: background 0.2s, transform 0.1s;
 }
 
+.disease-form button:hover {
+  background: #0a0aaa;
+  opacity: 0.9;
+}
+
+.disease-form button:active {
+  transform: scale(0.96);
+}
+
+/* ─── LIST ─── */
 .disease-list {
   display: flex;
   flex-direction: column;
@@ -81,9 +101,22 @@
   font-size: 12px;
 }
 
+/* ─── IMPROVED DELETE BUTTON ─── */
 .disease-item button {
-  background: #fee2e2;
+  background: transparent;
   color: #b91c1c;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  padding: 6px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.disease-item button:hover {
+  background: #fee2e2;
+  border-color: #b91c1c;
 }
 
 .disease-error {
