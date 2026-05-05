@@ -3,6 +3,7 @@ import Patient from '../Patient/Patient.jsx'
 import AddPatient from '../MODALS/AddPatient/AddPatient.jsx'
 import DiseaseManager from '../MODALS/DiseaseManager/DiseaseManager.jsx'
 import { patientsAPI } from '../../api/client.js'
+import { isCompanyNurse, isHrAdmin } from '../../utils/roles.js'
 import './PatientGrid.css'
 
 const PATIENTS_PER_PAGE = 12
@@ -18,7 +19,8 @@ function PatientGrid() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const isAdmin = String(user.role || '').toLowerCase().includes('admin')
+  const canManagePatients = isCompanyNurse(user.role)
+  const canManageDiseases = isHrAdmin(user.role)
 
   useEffect(() => {
     let active = true
@@ -126,8 +128,9 @@ function PatientGrid() {
                 key={p.id}
                 patient={p}
                 onPatientUpdated={handlePatientUpdated}
-                onDelete={isAdmin ? handleDeletePatient : undefined}
-                canDelete={isAdmin}
+                onDelete={canManagePatients ? handleDeletePatient : undefined}
+                canDelete={canManagePatients}
+                canEditPatient={canManagePatients}
               />
             ))
           }
@@ -166,14 +169,16 @@ function PatientGrid() {
       <div className="speed-dial">
         {speedDialOpen && (
           <div className="speed-dial-menu">
-            {isAdmin && (
+            {canManageDiseases && (
               <button onClick={() => { setShowDiseaseModal(true); setSpeedDialOpen(false) }}>
                 Diseases
               </button>
             )}
-            <button onClick={() => { setShowAddModal(true); setSpeedDialOpen(false) }}>
-              Add Patient
-            </button>
+            {canManagePatients && (
+              <button onClick={() => { setShowAddModal(true); setSpeedDialOpen(false) }}>
+                Add Patient
+              </button>
+            )}
           </div>
         )}
         <button

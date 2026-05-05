@@ -2,7 +2,7 @@ import { useState } from 'react'
 import PatientInfo from '../MODALS/PatientInfo/PatientInfo.jsx'
 import './Patient.css'
 
-function Patient({ patient, onPatientUpdated, onDelete, canDelete }) {
+function Patient({ patient, onPatientUpdated, onDelete, canDelete, canEditPatient }) {
   const [showInfo, setShowInfo] = useState(false)
 
   const displayName = `${patient.firstName} ${patient.lastName}`
@@ -48,6 +48,7 @@ function Patient({ patient, onPatientUpdated, onDelete, canDelete }) {
         onClose={() => setShowInfo(false)}
         patient={patient}
         onPatientUpdated={onPatientUpdated}
+        canEditPatient={canEditPatient}
       />
     </>
   )
