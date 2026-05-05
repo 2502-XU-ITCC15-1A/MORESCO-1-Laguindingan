@@ -1,7 +1,7 @@
 import express from 'express'
 import prisma from '../prisma.js'
 import auth from '../middleware/auth.js'
-import { requireAdmin } from '../middleware/roles.js'
+import { requireCompanyNurse } from '../middleware/roles.js'
 import { imageUpload } from '../upload.js'
 import { formatPatient, parseJsonArray, toBloodEnum } from '../utils/format.js'
 
@@ -62,7 +62,7 @@ router.get('/:id', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, upload.single('photo'), async (req, res) => {
+router.post('/', auth, requireCompanyNurse, upload.single('photo'), async (req, res) => {
   try {
     const allergies = parseJsonArray(req.body.allergies)
     const chronicConditions = parseJsonArray(req.body.chronicConditions)
@@ -85,7 +85,7 @@ router.post('/', auth, upload.single('photo'), async (req, res) => {
   }
 })
 
-router.put('/:id', auth, upload.single('photo'), async (req, res) => {
+router.put('/:id', auth, requireCompanyNurse, upload.single('photo'), async (req, res) => {
   try {
     const id = Number(req.params.id)
     const allergies = parseJsonArray(req.body.allergies)
@@ -115,7 +115,7 @@ router.put('/:id', auth, upload.single('photo'), async (req, res) => {
   }
 })
 
-router.delete('/:id', auth, requireAdmin, async (req, res) => {
+router.delete('/:id', auth, requireCompanyNurse, async (req, res) => {
   try {
     await prisma.patient.delete({ where: { id: Number(req.params.id) } })
     res.json({ message: 'Patient deleted' })
