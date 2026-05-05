@@ -33,9 +33,24 @@ The app container automatically:
 
 Seeded login accounts:
 
-- `andrei.valdez` / `moresco2024`
-- `admin` / `admin123`
-- `nurse1` / `nurse123`
+- `admin` / `admin123` - HR Admin
+- `nurse1` / `nurse123` - Company Nurse
+
+## Access Roles
+
+The system uses two access modes:
+
+- **HR Admin**
+  - Can log in as Moresco-1 with the HR Admin role shown under the profile name.
+  - Can view patient profiles and health information.
+  - Cannot add, edit, or delete patients.
+  - Can add and delete disease dictionary entries.
+- **Company Nurse**
+  - Can log in as Moresco-1 with the Company Nurse role shown under the profile name.
+  - Can add, edit, view, and delete patients.
+  - Can manage health information and health records.
+  - Can view diseases for diagnosis selection.
+  - Cannot add or delete disease dictionary entries.
 
 To stop the system:
 
@@ -132,13 +147,16 @@ http://localhost:5173
 
 - Login uses backend JWT authentication.
 - Patients load from PostgreSQL.
-- Add Patient saves to the database.
+- Company Nurse can add, edit, and delete patients.
+- HR Admin can view patients but cannot add, edit, or delete them.
 - Patient photos upload to `uploads/patients`.
 - Health tab blood type, allergies, and chronic conditions save to the database.
 - Health records load per patient.
 - New health records save to the database.
 - Health record edits and photo uploads persist.
 - Health record delete removes the database row.
+- HR Admin can add and delete disease dictionary entries.
+- Company Nurse can view diseases but cannot add or delete them.
 - Disease statistics API is available at `GET /api/records/stats/diseases`.
 
 ## Verification Commands
