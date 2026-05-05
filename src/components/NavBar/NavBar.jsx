@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import { recordsAPI } from '../../api/client.js'
+import { roleLabel } from '../../utils/roles.js'
 import morescoLogo from '../../assets/logo.png'
 import './NavBar.css'
 
@@ -38,7 +39,8 @@ function NavBar() {
   const [statsError, setStatsError] = useState('')
   const navigate = useNavigate()
   const user = getCurrentUser()
-  const displayName = user.username === 'admin' ? 'Administrator' : user.username || 'Andrei Valdez'
+  const displayName = 'Moresco-1'
+  const displayRole = roleLabel(user.role)
   const initials = displayName.split(/[.\s]+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'AV'
 
   useEffect(() => {
@@ -92,7 +94,7 @@ function NavBar() {
         <div className="nav-end">
           <button className="nav-profile" onClick={() => setDrawerOpen(true)} title="Open profile and stats">
             <span className="nav-profile-name">{displayName}</span>
-            <span className="nav-profile-role">{user.role || 'CEO of Nursing'}</span>
+            <span className="nav-profile-role">{displayRole}</span>
           </button>
         </div>
       </nav>
@@ -183,7 +185,7 @@ function NavBar() {
             <section className="drawer-profile-tab">
               <div className="drawer-user-avatar large">{initials}</div>
               <h2>{displayName}</h2>
-              <p>{user.role || 'CEO of Nursing'}</p>
+              <p>{displayRole}</p>
               <button className="drawer-logout-btn standalone" onClick={handleLogout}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>

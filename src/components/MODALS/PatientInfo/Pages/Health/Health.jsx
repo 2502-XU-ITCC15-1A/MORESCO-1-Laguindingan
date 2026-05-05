@@ -45,7 +45,7 @@ function TagList({ items, onAdd, onRemove, placeholder, editMode }) {
   )
 }
 
-function Health({ healthData, onUpdate }) {
+function Health({ healthData, onUpdate, canEdit = true }) {
   const [editMode, setEditMode]   = useState(false)
   const [saving, setSaving]       = useState(false)
   const [error, setError]         = useState('')
@@ -88,7 +88,7 @@ function Health({ healthData, onUpdate }) {
                   {saving ? 'Saving...' : 'Save'}
                 </button>
               </>
-            ) : (
+            ) : canEdit && (
               <button className="health-edit-btn" onClick={() => setEditMode(true)}>Edit</button>
             )}
           </div>

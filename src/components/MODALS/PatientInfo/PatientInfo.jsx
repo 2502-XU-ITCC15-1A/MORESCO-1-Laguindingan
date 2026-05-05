@@ -4,12 +4,13 @@ import { diseasesAPI, patientsAPI, recordsAPI } from '../../../api/client.js'
 import AccordionRecord from './AccordionRecord/AccordionRecord.jsx'
 import Personal from './Pages/Personal/Personal.jsx'
 import Health from './Pages/Health/Health.jsx'
+import { roleLabel } from '../../../utils/roles.js'
 import morescoLogo from '../../../assets/logo.png'
 import './PatientInfo.css'
 
 const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
 
-function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
+function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient = false }) {
   const [activeTab, setActiveTab] = useState('personal')
   const [filterMonth, setFilterMonth] = useState('')
   const [filterYear, setFilterYear] = useState('')
@@ -56,6 +57,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
   if (!patient) return null
 
   const displayName = `${patient.firstName} ${patient.lastName}`
+  const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
+  const displayRole = roleLabel(currentUser.role)
 
   function calcAge(birthDate) {
     if (!birthDate) return null
@@ -185,8 +188,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
 
         <div className="pi-header-right">
           <div className="pi-header-user">
-            <span className="pi-header-username">Andrei Valdez</span>
-            <span className="pi-header-userrole">CEO of Nursing</span>
+            <span className="pi-header-username">Moresco-1</span>
+            <span className="pi-header-userrole">{displayRole}</span>
           </div>
           <button className="pi-header-close" onClick={onClose} aria-label="Close">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round">
@@ -221,16 +224,20 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
                 <h2>{displayName}</h2>
                 <p>{patient.position}</p>
                 <span>{patient.idNumber}</span>
-                <button className="pi-change-photo-btn" onClick={() => patientPhotoInputRef.current?.click()} type="button">
-                  Change Photo
-                </button>
-                <input
-                  ref={patientPhotoInputRef}
-                  type="file"
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={handlePatientPhotoChange}
-                />
+                {canEditPatient && (
+                  <>
+                    <button className="pi-change-photo-btn" onClick={() => patientPhotoInputRef.current?.click()} type="button">
+                      Change Photo
+                    </button>
+                    <input
+                      ref={patientPhotoInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handlePatientPhotoChange}
+                    />
+                  </>
+                )}
               </div>
             </div>
 
@@ -245,6 +252,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated }) {
                 <Health
                   healthData={patientHealth}
                   onUpdate={handleHealthUpdate}
+                  canEdit={canEditPatient}
                 />
               )}
             </div>
