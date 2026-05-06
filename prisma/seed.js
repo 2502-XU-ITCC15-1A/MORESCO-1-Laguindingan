@@ -5,9 +5,8 @@ import { SAMPLE_PATIENTS, SAMPLE_RECORDS } from '../src/data/patients.js'
 const prisma = new PrismaClient()
 
 const USERS = [
-  { username: 'andrei.valdez', password: 'moresco2024', role: 'CEO of Nursing' },
-  { username: 'admin', password: 'admin123', role: 'Administrator' },
-  { username: 'nurse1', password: 'nurse123', role: 'Staff Nurse' },
+  { username: 'admin', password: 'admin123', role: 'HR Admin' },
+  { username: 'nurse1', password: 'nurse123', role: 'Company Nurse' },
 ]
 
 const DISEASES = [
@@ -35,6 +34,10 @@ function toBloodEnum(value) {
 
 async function main() {
   console.log('Starting database seeding...')
+
+  await prisma.user.deleteMany({
+    where: { username: 'andrei.valdez' },
+  })
 
   for (const user of USERS) {
     const passwordHash = await bcrypt.hash(user.password, 10)

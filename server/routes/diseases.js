@@ -1,7 +1,7 @@
 import express from 'express'
 import prisma from '../prisma.js'
 import auth from '../middleware/auth.js'
-import { requireAdmin } from '../middleware/roles.js'
+import { requireHrAdmin } from '../middleware/roles.js'
 
 const router = express.Router()
 
@@ -18,7 +18,7 @@ router.get('/', auth, async (req, res) => {
   }
 })
 
-router.post('/', auth, requireAdmin, async (req, res) => {
+router.post('/', auth, requireHrAdmin, async (req, res) => {
   try {
     const name = req.body.name?.trim()
     const aliases = Array.isArray(req.body.aliases) ? req.body.aliases.map(a => a.trim()).filter(Boolean) : []
@@ -36,7 +36,7 @@ router.post('/', auth, requireAdmin, async (req, res) => {
   }
 })
 
-router.delete('/:id', auth, requireAdmin, async (req, res) => {
+router.delete('/:id', auth, requireHrAdmin, async (req, res) => {
   try {
     await prisma.disease.update({
       where: { id: Number(req.params.id) },
