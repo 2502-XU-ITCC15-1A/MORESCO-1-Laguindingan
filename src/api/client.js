@@ -13,7 +13,7 @@ async function apiClient(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // ✅ CRITICAL FIX: Set Content-Type for JSON requests only
+  //  CRITICAL FIX: Set Content-Type for JSON requests only
   // If body is FormData, let the browser set the correct multipart header
   if (options.body && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';

@@ -8,7 +8,7 @@ import { roleLabel } from '../../../utils/roles.js'
 import morescoLogo from '../../../assets/logo.png'
 import './PatientInfo.css'
 
-const MONTH_NAMES = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
 function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient = false }) {
   const [activeTab, setActiveTab] = useState('personal')
@@ -135,7 +135,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
 
     const updated = await recordsAPI.update(recordId, payload)
     setRecords(prev =>
-      prev.map(record => record.id === recordId ? updated : record)
+      prev.map(record => (record.id === recordId ? updated : record))
     )
   }
 
@@ -190,7 +190,6 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     payload.append('bloodType', patientHealth.bloodType || 'Unknown')
     payload.append('allergies', JSON.stringify(patientHealth.allergies || []))
     payload.append('chronicConditions', JSON.stringify(patientHealth.chronicConditions || []))
-
     payload.append('photo', file)
 
     const updated = await patientsAPI.update(patient.id, payload)
@@ -226,8 +225,13 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
             <span className="pi-header-username">Moresco-1</span>
             <span className="pi-header-userrole">{displayRole}</span>
           </div>
-          <button className="pi-header-close" onClick={onClose}>
-            ✕
+          <button
+            className="pi-header-close"
+            onClick={onClose}
+            aria-label="Close patient profile"
+            type="button"
+          >
+            &times;
           </button>
         </div>
       </div>
@@ -248,8 +252,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
               >
                 {patient.photoPreview
                   ? <img src={patient.photoPreview} alt={displayName} />
-                  : <div>No Photo</div>
-                }
+                  : <div>No Photo</div>}
               </button>
 
               <div className="pi-profile-info">
@@ -257,30 +260,41 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                 <p>{patient.position}</p>
                 <span>{patient.idNumber}</span>
 
-                {canEditPatient && (
-                  <>
-                    <button
-                      className="pi-change-photo-btn"
-                      onClick={() => patientPhotoInputRef.current?.click()}
-                    >
-                      Change Photo
-                    </button>
+                <>
+                  <button
+                    className="pi-change-photo-btn"
+                    onClick={() => patientPhotoInputRef.current?.click()}
+                    type="button"
+                  >
+                    Change Photo
+                  </button>
 
-                    <input
-                      ref={patientPhotoInputRef}
-                      type="file"
-                      accept="image/*"
-                      hidden
-                      onChange={handlePatientPhotoChange}
-                    />
-                  </>
-                )}
+                  <input
+                    ref={patientPhotoInputRef}
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handlePatientPhotoChange}
+                  />
+                </>
               </div>
             </div>
 
             <div className="pi-tabs">
-              <button onClick={() => setActiveTab('personal')}>Personal</button>
-              <button onClick={() => setActiveTab('health')}>Health</button>
+              <button
+                className={`pi-tab ${activeTab === 'personal' ? 'active' : ''}`}
+                onClick={() => setActiveTab('personal')}
+                type="button"
+              >
+                Personal
+              </button>
+              <button
+                className={`pi-tab ${activeTab === 'health' ? 'active' : ''}`}
+                onClick={() => setActiveTab('health')}
+                type="button"
+              >
+                Health
+              </button>
             </div>
 
             <div className="pi-tab-content">
@@ -296,24 +310,61 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
           </div>
 
           <div className="pi-right">
-            <h3>Health Records</h3>
-            <button onClick={handleAddRecord}>New</button>
+            <div className="pi-records-header">
+              <h3 className="pi-records-title">Health Records</h3>
 
-            {filteredRecords.map(record => (
-              <AccordionRecord
-                key={record.id}
-                record={record}
-                isOpen={openRecordId === record.id}
-                onToggle={() =>
-                  setOpenRecordId(current =>
-                    current === record.id ? null : record.id
-                  )
-                }
-                onDelete={() => handleDeleteRecord(record.id)}
-                onSave={(form, file) => handleSaveRecord(record.id, form, file)}
-                diseases={diseases}
-              />
-            ))}
+              <div className="pi-records-filters">
+                <select
+                  aria-label="Filter records by month"
+                  value={filterMonth}
+                  onChange={e => setFilterMonth(e.target.value)}
+                >
+                  <option value="">All months</option>
+                  {MONTH_NAMES.map((month, index) => (
+                    <option key={month} value={String(index + 1)}>
+                      {month}
+                    </option>
+                  ))}
+                </select>
+
+                <select
+                  aria-label="Filter records by year"
+                  value={filterYear}
+                  onChange={e => setFilterYear(e.target.value)}
+                >
+                  <option value="">All years</option>
+                  {years.map(year => (
+                    <option key={year} value={year}>
+                      {year}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button className="pi-new-btn" onClick={handleAddRecord} type="button">
+                New
+              </button>
+            </div>
+
+            <div className="pi-records-list">
+              {loadingRecords && <div className="pi-no-records">Loading records...</div>}
+              {!loadingRecords && recordError && <div className="pi-no-records">{recordError}</div>}
+              {!loadingRecords && !recordError && filteredRecords.length === 0 && (
+                <div className="pi-no-records">No health records found for this patient.</div>
+              )}
+
+              {!loadingRecords && !recordError && filteredRecords.map(record => (
+                <AccordionRecord
+                  key={record.id}
+                  record={record}
+                  isOpen={openRecordId === record.id}
+                  onToggle={() => setOpenRecordId(current => (current === record.id ? null : record.id))}
+                  onDelete={() => handleDeleteRecord(record.id)}
+                  onSave={(form, file) => handleSaveRecord(record.id, form, file)}
+                  diseases={diseases}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </Modal.Body>

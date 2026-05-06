@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import './Health.css'
 
-const BLOOD_TYPES = ['Unknown','A+','A-','B+','B-','AB+','AB-','O+','O-']
+const BLOOD_TYPES = ['Unknown', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
 
 function TagList({ items, onAdd, onRemove, placeholder, editMode }) {
   const [input, setInput] = useState('')
@@ -23,11 +23,12 @@ function TagList({ items, onAdd, onRemove, placeholder, editMode }) {
             <span key={item} className="health-tag">
               {item}
               {editMode && (
-                <button className="health-tag-remove" onClick={() => onRemove(item)}>×</button>
+                <button className="health-tag-remove" onClick={() => onRemove(item)} type="button">
+                  &times;
+                </button>
               )}
             </span>
-          ))
-        }
+          ))}
       </div>
       {editMode && (
         <div className="health-tag-input-row">
@@ -35,10 +36,17 @@ function TagList({ items, onAdd, onRemove, placeholder, editMode }) {
             className="health-tag-input"
             value={input}
             onChange={e => setInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); handleAdd() } }}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                handleAdd()
+              }
+            }}
             placeholder={placeholder}
           />
-          <button className="health-tag-add" onClick={handleAdd}>Add</button>
+          <button className="health-tag-add" onClick={handleAdd} type="button">
+            Add
+          </button>
         </div>
       )}
     </div>
@@ -46,12 +54,12 @@ function TagList({ items, onAdd, onRemove, placeholder, editMode }) {
 }
 
 function Health({ healthData, onUpdate, canEdit = true }) {
-  const [editMode, setEditMode]   = useState(false)
-  const [saving, setSaving]       = useState(false)
-  const [error, setError]         = useState('')
-  const [allergies, setAllergies] = useState(healthData?.allergies         || [])
+  const [editMode, setEditMode] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+  const [allergies, setAllergies] = useState(healthData?.allergies || [])
   const [conditions, setConditions] = useState(healthData?.chronicConditions || [])
-  const [bloodType, setBloodType] = useState(healthData?.bloodType          || 'Unknown')
+  const [bloodType, setBloodType] = useState(healthData?.bloodType || 'Unknown')
 
   async function handleSave() {
     setSaving(true)
@@ -67,82 +75,81 @@ function Health({ healthData, onUpdate, canEdit = true }) {
   }
 
   function handleCancel() {
-    setAllergies(healthData?.allergies         || [])
+    setAllergies(healthData?.allergies || [])
     setConditions(healthData?.chronicConditions || [])
-    setBloodType(healthData?.bloodType          || 'Unknown')
+    setBloodType(healthData?.bloodType || 'Unknown')
     setEditMode(false)
   }
 
   return (
     <div className="health-container">
       <div className="health-section">
-
-        {/* Section header with edit/save */}
         <div className="health-section-header">
           <h4 className="health-section-title">Health Information</h4>
           <div className="health-header-btns">
             {editMode ? (
               <>
-                <button className="health-cancel-btn" onClick={handleCancel}>Cancel</button>
-                <button className="health-save-btn" onClick={handleSave} disabled={saving}>
+                <button className="health-cancel-btn" onClick={handleCancel} type="button">
+                  Cancel
+                </button>
+                <button className="health-save-btn" onClick={handleSave} disabled={saving} type="button">
                   {saving ? 'Saving...' : 'Save'}
                 </button>
               </>
             ) : canEdit && (
-              <button className="health-edit-btn" onClick={() => setEditMode(true)}>Edit</button>
+              <button className="health-edit-btn" onClick={() => setEditMode(true)} type="button">
+                Edit
+              </button>
             )}
           </div>
         </div>
 
         {error && <div className="health-tag-empty">{error}</div>}
 
-        {/* Blood Type */}
         <div className="health-field">
           <label className="health-field-label">Blood Type</label>
-          {editMode
-            ? (
-              <select
-                className="health-blood-select"
-                value={bloodType}
-                onChange={e => setBloodType(e.target.value)}
-              >
-                {BLOOD_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-            )
-            : (
-              <div className="health-tag-items">
-                <span className={`health-blood-badge ${bloodType !== 'Unknown' ? 'known' : ''}`}>
-                  {bloodType}
-                </span>
-              </div>
-            )
-          }
+          {editMode ? (
+            <select
+              className="health-blood-select"
+              value={bloodType}
+              onChange={e => setBloodType(e.target.value)}
+            >
+              {BLOOD_TYPES.map(type => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="health-tag-items">
+              <span className={`health-blood-badge ${bloodType !== 'Unknown' ? 'known' : ''}`}>
+                {bloodType}
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Allergies */}
         <div className="health-field">
           <label className="health-field-label">Allergies</label>
           <TagList
             items={allergies}
-            onAdd={val => setAllergies(a => [...a, val])}
-            onRemove={val => setAllergies(a => a.filter(x => x !== val))}
+            onAdd={val => setAllergies(current => [...current, val])}
+            onRemove={val => setAllergies(current => current.filter(item => item !== val))}
             placeholder="Type allergy, press Enter or Add"
             editMode={editMode}
           />
         </div>
 
-        {/* Chronic Conditions */}
         <div className="health-field">
           <label className="health-field-label">Chronic Conditions</label>
           <TagList
             items={conditions}
-            onAdd={val => setConditions(c => [...c, val])}
-            onRemove={val => setConditions(c => c.filter(x => x !== val))}
+            onAdd={val => setConditions(current => [...current, val])}
+            onRemove={val => setConditions(current => current.filter(item => item !== val))}
             placeholder="Type condition, press Enter or Add"
             editMode={editMode}
           />
         </div>
-
       </div>
     </div>
   )
