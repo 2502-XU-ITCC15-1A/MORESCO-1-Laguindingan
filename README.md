@@ -7,7 +7,6 @@
   ![React](https://img.shields.io/badge/React-20232A?style=flat&logo=react&logoColor=61DAFB)
   ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat&logo=vite&logoColor=white)
   ![Express](https://img.shields.io/badge/Express-000000?style=flat&logo=express&logoColor=white)
-  ![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=flat&logo=prisma&logoColor=white)
   ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)
 
 </div>
@@ -24,7 +23,8 @@ The system supports:
 - Patient profile viewing with personal information, address, BMI, health data, and record history
 - Health record creation, editing, deletion, filtering, diagnosis tracking, and photo attachments
 - Common disease statistics in the dashboard drawer
-- Role-aware actions such as patient deletion for administrators
+- Disease dictionary management for HR Admin and Company Nurse
+- Role-aware access for patient editing, health record editing, and disease management
 
 ---
 
@@ -40,8 +40,8 @@ The system supports:
 ### Backend
 
 - **Node.js + Express** for the API server
-- **Prisma** for database access
 - **PostgreSQL** for persistent storage
+- **pg** for direct database access
 - **Multer** for uploaded patient and record photos
 - **JWT** for authentication
 
@@ -51,24 +51,25 @@ The system supports:
 
 ```text
 MORESCO-1-Laguindingan/
-├── README.md
-├── package.json
-├── vite.config.js
-├── prisma/
-│   ├── schema.prisma
-│   ├── seed.js
-│   └── migrations/
-├── server/
-│   ├── index.js
-│   ├── routes/
-│   ├── middleware/
-│   └── utils/
-└── src/
-    ├── App.jsx
-    ├── api/
-    ├── assets/
-    ├── components/
-    └── pages/
+|-- README.md
+|-- package.json
+|-- docker-compose.yml
+|-- Dockerfile
+|-- server/
+|   |-- db-init.js
+|   |-- db.js
+|   |-- docker-start.js
+|   |-- index.js
+|   |-- middleware/
+|   |-- routes/
+|   |-- seed.js
+|   `-- utils/
+`-- src/
+    |-- App.jsx
+    |-- api/
+    |-- assets/
+    |-- components/
+    `-- pages/
 ```
 
 ---
@@ -87,19 +88,22 @@ MORESCO-1-Laguindingan/
 npm install
 ```
 
+If `npm install` fails with a temporary network error such as `ECONNRESET`, retry it. Docker can still run the app independently after a successful image build.
+
 Create a `.env` file in the project root and configure your database and authentication secret:
 
 ```env
 DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/DATABASE_NAME"
 JWT_SECRET="replace-with-a-secure-secret"
+JWT_EXPIRES_IN="8h"
 CLIENT_ORIGIN="http://localhost:5173"
 PORT=5000
 ```
 
-Run the database migration and seed data:
+Initialize the database schema and seed data:
 
 ```bash
-npm run db:migrate
+npm run db:init
 npm run db:seed
 ```
 
@@ -121,6 +125,25 @@ Open the app at:
 http://localhost:5173
 ```
 
+### Docker Setup
+
+Run the full app with Docker:
+
+```bash
+docker compose up -d --build
+```
+
+This starts:
+
+- PostgreSQL on `localhost:5432`
+- The app on `http://localhost:5173`
+
+To stop it:
+
+```bash
+docker compose down
+```
+
 ---
 
 ## Default Login
@@ -130,6 +153,11 @@ After seeding, use:
 ```text
 Username: admin
 Password: admin123
+```
+
+```text
+Username: nurse1
+Password: nurse123
 ```
 
 ---
@@ -154,28 +182,34 @@ Password: admin123
 ### View a Patient Profile
 
 1. Click a patient card on the Patients page.
-2. Review the patient's photo, personal information, address, BMI, and health details.
-3. Click `Change Photo` to update the patient's profile picture.
+2. Review the patient's photo, personal information, address, BMI, health details, and records.
+3. Company Nurse can edit patient details and records.
+4. HR Admin can view only.
 
 ### Manage Health Records
 
 1. Open a patient profile.
-2. Click `New` to add a health record.
-3. Open a record accordion to view or edit details.
-4. Only one accordion stays open at a time so the record list remains easier to scan.
-5. Use `Month` and `Year` filters to narrow the displayed records.
+2. Company Nurse can click `New` to add a health record.
+3. Open a record accordion to view details.
+4. Company Nurse can edit or delete a record.
+5. HR Admin can view records only.
+6. Use `Month` and `Year` filters to narrow the displayed records.
+
+### Manage Diseases
+
+1. Open the `Diseases` action from the floating action menu.
+2. HR Admin and Company Nurse can add diseases.
+3. HR Admin and Company Nurse can delete diseases.
 
 ### View Disease Statistics
 
-1. Click the `Patients` badge in the top navigation or the profile area.
-2. In the drawer, open the `Stats` tab.
-3. Use the month selector to filter common disease counts.
+1. Click the `Patients` badge in the top navigation.
+2. Use the month selector in the right drawer to filter common disease counts.
 
 ### Log Out
 
-1. Open the drawer from the navigation bar.
-2. Select the `Profile` tab.
-3. Click `Logout`.
+1. Click the profile name in the top-right corner.
+2. Click `Logout` in the mini profile menu.
 
 ---
 
@@ -187,7 +221,7 @@ Password: admin123
 | `npm run server` | Start the Express backend |
 | `npm run build` | Build the frontend for production |
 | `npm run lint` | Run ESLint |
-| `npm run db:migrate` | Apply Prisma migrations |
+| `npm run db:init` | Initialize PostgreSQL tables |
 | `npm run db:seed` | Seed default data |
 
 ---
@@ -195,5 +229,6 @@ Password: admin123
 ## Notes
 
 - Uploaded patient photos and record photos are served from `/uploads`.
+- Uploaded files are stored on disk under `uploads/patients/...` and `uploads/records/...`; the database stores only the file path.
 - During local development, Vite proxies `/api` and `/uploads` to the Express backend on port `5000`.
 - Keep the backend running while using the frontend so patient data, disease statistics, and uploaded images load correctly.

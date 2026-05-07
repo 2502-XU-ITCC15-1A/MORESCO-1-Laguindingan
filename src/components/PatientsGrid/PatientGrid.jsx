@@ -3,7 +3,7 @@ import Patient from '../Patient/Patient.jsx'
 import AddPatient from '../MODALS/AddPatient/AddPatient.jsx'
 import DiseaseManager from '../MODALS/DiseaseManager/DiseaseManager.jsx'
 import { patientsAPI } from '../../api/client.js'
-import { isCompanyNurse, isHrAdmin } from '../../utils/roles.js'
+import { canManageDiseases, isCompanyNurse } from '../../utils/roles.js'
 import './PatientGrid.css'
 
 const PATIENTS_PER_PAGE = 12
@@ -20,7 +20,7 @@ function PatientGrid() {
   const [error, setError] = useState('')
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const canManagePatients = isCompanyNurse(user.role)
-  const canManageDiseases = isHrAdmin(user.role)
+  const canOpenDiseaseManager = canManageDiseases(user.role)
 
   useEffect(() => {
     let active = true
@@ -169,7 +169,7 @@ function PatientGrid() {
       <div className="speed-dial">
         {speedDialOpen && (
           <div className="speed-dial-menu">
-            {canManageDiseases && (
+            {canOpenDiseaseManager && (
               <button onClick={() => { setShowDiseaseModal(true); setSpeedDialOpen(false) }}>
                 Diseases
               </button>

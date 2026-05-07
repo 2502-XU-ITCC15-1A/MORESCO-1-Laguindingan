@@ -23,3 +23,10 @@ export function requireCompanyNurse(req, res, next) {
   }
   next()
 }
+
+export function requireDiseaseManager(req, res, next) {
+  if (!isHrAdmin(req) && !isCompanyNurse(req)) {
+    return res.status(403).json({ message: 'Disease management access required' })
+  }
+  next()
+}
