@@ -3,6 +3,7 @@ import cors from 'cors'
 import express from 'express'
 import fs from 'node:fs'
 import path from 'node:path'
+import { initDb } from './db-init.js'
 import authRoutes from './routes/auth.js'
 import patientRoutes from './routes/patients.js'
 import recordRoutes from './routes/records.js'
@@ -10,9 +11,18 @@ import diseaseRoutes from './routes/diseases.js'
 
 const app = express()
 const port = process.env.PORT || 5000
+// change it so that it can handle multiple origins
+const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
+  .split(',').map(o => o.trim());
 
 app.use(cors({
-  origin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS blocked: ${origin}`));
+  },
   credentials: true,
 }))
 app.use(express.json())
@@ -49,6 +59,13 @@ if (process.env.NODE_ENV === 'production' && fs.existsSync(distPath)) {
   })
 }
 
-app.listen(port, () => {
-  console.log(`Moresco-1 backend running on http://localhost:${port}`)
-})
+initDb()
+  .then(() => {
+    app.listen(port, () => {
+      console.log(`Moresco-1 backend running on http://localhost:${port}`)
+    })
+  })
+  .catch(error => {
+    console.error('Failed to initialize database schema:', error)
+    process.exit(1)
+  })

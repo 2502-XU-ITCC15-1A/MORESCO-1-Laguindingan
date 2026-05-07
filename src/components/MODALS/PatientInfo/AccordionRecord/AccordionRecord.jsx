@@ -6,7 +6,7 @@ function extractValue(str) {
   return str.replace(/\s*(mmhg|bpm|%|c)\s*/gi, '').trim()
 }
 
-function AccordionRecord({ record, isOpen = false, onToggle, onDelete, onSave, diseases = [] }) {
+function AccordionRecord({ record, isOpen = false, onToggle, onDelete, onSave, diseases = [], canEdit = true }) {
   const [tab, setTab] = useState('complaints')
   const [editMode, setEditMode] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -61,14 +61,16 @@ function AccordionRecord({ record, isOpen = false, onToggle, onDelete, onSave, d
       <div className="accordion-summary" onClick={onToggle}>
         <span className="accordion-date">{record.date}</span>
         <div className="accordion-actions" onClick={e => e.stopPropagation()}>
-          <button className="acc-icon-btn" title="Delete" aria-label={`Delete health record from ${record.date}`} onClick={onDelete}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="3 6 5 6 21 6"/>
-              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
-              <path d="M10 11v6M14 11v6"/>
-              <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
-            </svg>
-          </button>
+          {canEdit && (
+            <button className="acc-icon-btn" title="Delete" aria-label={`Delete health record from ${record.date}`} onClick={onDelete}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+              </svg>
+            </button>
+          )}
           <button
             className="acc-icon-btn"
             title={isOpen ? 'Collapse' : 'Expand'}
@@ -186,10 +188,11 @@ function AccordionRecord({ record, isOpen = false, onToggle, onDelete, onSave, d
               </div>
 
               <div className="acc-edit-row">
-                {editMode
-                  ? <button className="acc-save-btn" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
-                  : <button className="acc-edit-btn" onClick={() => setEditMode(true)}>Edit</button>
-                }
+                {canEdit && (
+                  editMode
+                    ? <button className="acc-save-btn" onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+                    : <button className="acc-edit-btn" onClick={() => setEditMode(true)}>Edit</button>
+                )}
               </div>
             </div>
           </div>

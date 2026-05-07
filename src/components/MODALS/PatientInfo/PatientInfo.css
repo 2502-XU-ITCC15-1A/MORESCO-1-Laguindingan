@@ -1,5 +1,5 @@
 .pi-modal-dialog {
-  max-width: min(1180px, calc(100vw - 48px)) !important;
+  max-width: min(1360px, calc(100vw - 36px)) !important;
   margin: 20px auto !important;
 }
 
@@ -116,7 +116,7 @@
 
 .pi-container {
   display: grid;
-  grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+  grid-template-columns: minmax(360px, 430px) minmax(0, 1fr);
   height: 100%;
   width: 100%;
 }
@@ -136,6 +136,7 @@
   background: white;
   border-radius: 12px;
   border: 1px solid #e5e7eb;
+  box-shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
   padding: 16px;
   display: grid;
   grid-template-columns: 68px minmax(0, 1fr);
@@ -250,6 +251,7 @@
   overflow: hidden;
   border: 1px solid #e5e7eb;
   background: white;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.06);
   flex-shrink: 0;
 }
 

@@ -171,7 +171,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
 
   async function handlePatientPhotoChange(e) {
     const file = e.target.files[0]
-    if (!file) return
+    e.target.value = ''
+    if (!file || !canEditPatient) return
 
     const payload = new FormData()
 
@@ -192,8 +193,12 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     payload.append('chronicConditions', JSON.stringify(patientHealth.chronicConditions || []))
     payload.append('photo', file)
 
-    const updated = await patientsAPI.update(patient.id, payload)
-    onPatientUpdated?.(updated)
+    try {
+      const updated = await patientsAPI.update(patient.id, payload)
+      onPatientUpdated?.(updated)
+    } catch (error) {
+      setRecordError(error.message || 'Unable to update patient photo.')
+    }
   }
 
   const years = [...new Set(
@@ -260,7 +265,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                 <p>{patient.position}</p>
                 <span>{patient.idNumber}</span>
 
-                <>
+                {canEditPatient && (
+                  <>
                   <button
                     className="pi-change-photo-btn"
                     onClick={() => patientPhotoInputRef.current?.click()}
@@ -276,7 +282,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                     hidden
                     onChange={handlePatientPhotoChange}
                   />
-                </>
+                  </>
+                )}
               </div>
             </div>
 
@@ -341,9 +348,11 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                 </select>
               </div>
 
-              <button className="pi-new-btn" onClick={handleAddRecord} type="button">
-                New
-              </button>
+              {canEditPatient && (
+                <button className="pi-new-btn" onClick={handleAddRecord} type="button">
+                  New
+                </button>
+              )}
             </div>
 
             <div className="pi-records-list">
@@ -362,6 +371,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                   onDelete={() => handleDeleteRecord(record.id)}
                   onSave={(form, file) => handleSaveRecord(record.id, form, file)}
                   diseases={diseases}
+                  canEdit={canEditPatient}
                 />
               ))}
             </div>
