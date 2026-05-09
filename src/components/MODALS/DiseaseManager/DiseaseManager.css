@@ -79,17 +79,19 @@
 .disease-item {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 12px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  padding: 10px;
+  padding: 12px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
 }
 
 .disease-item div {
   display: flex;
   flex-direction: column;
   gap: 2px;
+  width: 100%;
 }
 
 .disease-item strong {
@@ -101,24 +103,25 @@
   font-size: 12px;
 }
 
-/* ─── IMPROVED DELETE BUTTON ─── */
-.disease-item button {
+.disease-delete-btn {
   background: transparent;
   color: #b91c1c;
   border: 1px solid #fca5a5;
-  border-radius: 6px;
-  padding: 6px 16px;
+  border-radius: 8px;
+  padding: 7px 14px;
   font-weight: 700;
   cursor: pointer;
   font-family: inherit;
   transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
 }
 
-.disease-item button:hover {
+.disease-delete-btn:hover {
   background: #fee2e2;
-  border-color: #b91c1c;
+  border-color: #ef4444;
 }
 
+/* ─── IMPROVED DELETE BUTTON ─── */
 .disease-error {
   color: #b91c1c;
   font-size: 13px;

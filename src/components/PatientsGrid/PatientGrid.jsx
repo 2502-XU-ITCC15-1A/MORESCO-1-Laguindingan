@@ -3,6 +3,7 @@ import Patient from '../Patient/Patient.jsx'
 import AddPatient from '../MODALS/AddPatient/AddPatient.jsx'
 import DiseaseManager from '../MODALS/DiseaseManager/DiseaseManager.jsx'
 import { patientsAPI } from '../../api/client.js'
+import { canManageDiseases, isCompanyNurse } from '../../utils/roles.js'
 import './PatientGrid.css'
 
 const PATIENTS_PER_PAGE = 12
@@ -17,15 +18,25 @@ function PatientGrid() {
   const [speedDialOpen, setSpeedDialOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
   const user = JSON.parse(localStorage.getItem('user') || '{}')
-  const isAdmin = String(user.role || '').toLowerCase().includes('admin')
+  const canManagePatients = isCompanyNurse(user.role)
+  const canOpenDiseaseManager = canManageDiseases(user.role)
 
   useEffect(() => {
     let active = true
 
     async function loadPatients() {
+      if (active) {
+        setLoading(true)
+        setError('')
+      }
+
       try {
-        const data = await patientsAPI.getAll()
+        const data = await patientsAPI.getAll({
+          q: search.trim(),
+          sort,
+        })
         if (active) setPatients(data)
       } catch (err) {
         if (active) setError(err.message || 'Unable to load patients.')
@@ -34,40 +45,23 @@ function PatientGrid() {
       }
     }
 
-    loadPatients()
-    return () => { active = false }
-  }, [])
+    const timeoutId = setTimeout(loadPatients, 250)
+    return () => {
+      active = false
+      clearTimeout(timeoutId)
+    }
+  }, [search, sort, reloadKey])
 
-  const filtered = patients
-    .filter(p => {
-      const q = search.trim().toLowerCase()
-      if (!q) return true
-      const names = [p.firstName, p.middleName, p.lastName].filter(Boolean).map(name => String(name).toLowerCase())
-      const fullName = `${p.firstName || ''} ${p.middleName || ''} ${p.lastName || ''}`.replace(/\s+/g, ' ').trim().toLowerCase()
-      return (
-        names.some(name => name.startsWith(q)) ||
-        fullName.startsWith(q) ||
-        String(p.idNumber || '').toLowerCase().includes(q)
-      )
-    })
-    .sort((a, b) => {
-      switch (sort) {
-        case 'name-asc': return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
-        case 'name-desc': return `${b.firstName} ${b.lastName}`.localeCompare(`${a.firstName} ${a.lastName}`)
-        case 'id-asc': return String(a.idNumber).localeCompare(String(b.idNumber))
-        default: return 0
-      }
-    })
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PATIENTS_PER_PAGE))
+  const totalPages = Math.max(1, Math.ceil(patients.length / PATIENTS_PER_PAGE))
   const safePage = Math.min(currentPage, totalPages)
   const pageStart = (safePage - 1) * PATIENTS_PER_PAGE
-  const paginated = filtered.slice(pageStart, pageStart + PATIENTS_PER_PAGE)
+  const paginated = patients.slice(pageStart, pageStart + PATIENTS_PER_PAGE)
 
   async function handleAddPatient(formData) {
-    const created = await patientsAPI.create(formData)
-    setPatients(prev => [...prev, created])
+    await patientsAPI.create(formData)
     setShowAddModal(false)
+    setCurrentPage(1)
+    setReloadKey(key => key + 1)
   }
 
   function handlePatientUpdated(updatedPatient) {
@@ -78,7 +72,7 @@ function PatientGrid() {
 
   async function handleDeletePatient(patientId) {
     await patientsAPI.delete(patientId)
-    setPatients(prev => prev.filter(patient => patient.id !== patientId))
+    setReloadKey(key => key + 1)
   }
 
   function getPageNumbers() {
@@ -94,17 +88,19 @@ function PatientGrid() {
   }
 
   return (
-    <div className="main-content">
+    <main className="main-content">
       <div className="grid-toolbar">
         <input
           className="grid-search"
           type="text"
+          aria-label="Search patients"
           placeholder="Search patient name, ID, or position..."
           value={search}
           onChange={e => { setSearch(e.target.value); setCurrentPage(1) }}
         />
         <select
           className="grid-sort"
+          aria-label="Sort patients"
           value={sort}
           onChange={e => { setSort(e.target.value); setCurrentPage(1) }}
         >
@@ -124,8 +120,9 @@ function PatientGrid() {
                 key={p.id}
                 patient={p}
                 onPatientUpdated={handlePatientUpdated}
-                onDelete={isAdmin ? handleDeletePatient : undefined}
-                canDelete={isAdmin}
+                onDelete={canManagePatients ? handleDeletePatient : undefined}
+                canDelete={canManagePatients}
+                canEditPatient={canManagePatients}
               />
             ))
           }
@@ -137,6 +134,7 @@ function PatientGrid() {
             className="page-btn"
             disabled={safePage === 1}
             onClick={() => setCurrentPage(p => p - 1)}
+            aria-label="Previous page"
           >&lt;</button>
 
           {getPageNumbers().map((page, i) =>
@@ -146,6 +144,8 @@ function PatientGrid() {
                   key={page}
                   className={`page-btn ${safePage === page ? 'active' : ''}`}
                   onClick={() => setCurrentPage(page)}
+                  aria-label={`Go to page ${page}`}
+                  aria-current={safePage === page ? 'page' : undefined}
                 >{page}</button>
           )}
 
@@ -153,6 +153,7 @@ function PatientGrid() {
             className="page-btn"
             disabled={safePage === totalPages}
             onClick={() => setCurrentPage(p => p + 1)}
+            aria-label="Next page"
           >&gt;</button>
         </div>
       </div>
@@ -160,17 +161,27 @@ function PatientGrid() {
       <div className="speed-dial">
         {speedDialOpen && (
           <div className="speed-dial-menu">
-            {isAdmin && (
+            {canOpenDiseaseManager && (
               <button onClick={() => { setShowDiseaseModal(true); setSpeedDialOpen(false) }}>
                 Diseases
               </button>
             )}
-            <button onClick={() => { setShowAddModal(true); setSpeedDialOpen(false) }}>
-              Add Patient
-            </button>
+            {canManagePatients && (
+              <button onClick={() => { setShowAddModal(true); setSpeedDialOpen(false) }}>
+                Add Patient
+              </button>
+            )}
           </div>
         )}
-        <button className="fab-add" onClick={() => setSpeedDialOpen(open => !open)} title="Actions">+</button>
+        <button
+          className="fab-add"
+          onClick={() => setSpeedDialOpen(open => !open)}
+          title="Actions"
+          aria-label={speedDialOpen ? 'Close actions menu' : 'Open actions menu'}
+          aria-expanded={speedDialOpen}
+        >
+          +
+        </button>
       </div>
 
       <AddPatient
@@ -182,7 +193,7 @@ function PatientGrid() {
         show={showDiseaseModal}
         onClose={() => setShowDiseaseModal(false)}
       />
-    </div>
+    </main>
   )
 }
 

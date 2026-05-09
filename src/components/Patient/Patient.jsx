@@ -2,7 +2,7 @@ import { useState } from 'react'
 import PatientInfo from '../MODALS/PatientInfo/PatientInfo.jsx'
 import './Patient.css'
 
-function Patient({ patient, onPatientUpdated, onDelete, canDelete }) {
+function Patient({ patient, onPatientUpdated, onDelete, canDelete, canEditPatient }) {
   const [showInfo, setShowInfo] = useState(false)
 
   const displayName = `${patient.firstName} ${patient.lastName}`
@@ -18,16 +18,21 @@ function Patient({ patient, onPatientUpdated, onDelete, canDelete }) {
               onDelete?.(patient.id)
             }}
             title="Delete patient"
+            aria-label={`Delete ${displayName}`}
           >
             x
           </button>
         )}
-        {/* Avatar */}
         <div className="patient-avatar">
-          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
-            <circle cx="40" cy="28" r="18" fill="rgba(255,255,255,0.85)"/>
-            <ellipse cx="40" cy="72" rx="28" ry="20" fill="rgba(255,255,255,0.85)"/>
-          </svg>
+          {patient.photoPreview
+            ? <img src={patient.photoPreview} alt={displayName} />
+            : (
+              <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg" width="80" height="80">
+                <circle cx="40" cy="28" r="18" fill="rgba(255,255,255,0.85)"/>
+                <ellipse cx="40" cy="72" rx="28" ry="20" fill="rgba(255,255,255,0.85)"/>
+              </svg>
+            )
+          }
         </div>
 
         {/* Patient Info */}
@@ -43,6 +48,7 @@ function Patient({ patient, onPatientUpdated, onDelete, canDelete }) {
         onClose={() => setShowInfo(false)}
         patient={patient}
         onPatientUpdated={onPatientUpdated}
+        canEditPatient={canEditPatient}
       />
     </>
   )

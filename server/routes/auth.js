@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt'
 import express from 'express'
 import jwt from 'jsonwebtoken'
-import prisma from '../prisma.js'
+import { query } from '../db.js'
 import auth from '../middleware/auth.js'
 
 const router = express.Router()
@@ -13,11 +13,13 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ message: 'Username and password are required' })
     }
 
-    const user = await prisma.user.findUnique({
-      where: { username: username.trim() },
-    })
+    const result = await query(
+      'SELECT id, username, password_hash, role FROM users WHERE username = $1 LIMIT 1',
+      [username.trim()],
+    )
+    const user = result.rows[0]
 
-    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
       return res.status(401).json({ message: 'Invalid username or password' })
     }
 
@@ -45,16 +47,20 @@ router.post('/change-password', auth, async (req, res) => {
       return res.status(400).json({ message: 'Old and new passwords are required' })
     }
 
-    const user = await prisma.user.findUnique({ where: { id: req.user.id } })
-    if (!user || !(await bcrypt.compare(oldPassword, user.passwordHash))) {
+    const result = await query(
+      'SELECT id, password_hash FROM users WHERE id = $1 LIMIT 1',
+      [req.user.id],
+    )
+    const user = result.rows[0]
+    if (!user || !(await bcrypt.compare(oldPassword, user.password_hash))) {
       return res.status(401).json({ message: 'Old password is incorrect' })
     }
 
     const passwordHash = await bcrypt.hash(newPassword, 10)
-    await prisma.user.update({
-      where: { id: req.user.id },
-      data: { passwordHash },
-    })
+    await query(
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      [passwordHash, req.user.id],
+    )
 
     res.json({ message: 'Password updated successfully' })
   } catch (error) {
