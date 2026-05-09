@@ -14,6 +14,32 @@ function getTodayDateInputValue() {
   return new Date().toISOString().slice(0, 10)
 }
 
+function formatDateForDisplay(value) {
+  if (!value) return ''
+  const [year, month, day] = String(value).split('-')
+  if (!year || !month || !day) return ''
+  return `${month}/${day}/${year}`
+}
+
+function parseManualDateInput(value) {
+  const match = String(value || '').trim().match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/)
+  if (!match) return ''
+
+  const month = Number(match[1])
+  const day = Number(match[2])
+  const year = Number(match[3])
+
+  if (month < 1 || month > 12 || day < 1 || day > 31 || year < 1000) return ''
+
+  const normalized = `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+  const parsed = new Date(`${normalized}T00:00:00`)
+
+  if (Number.isNaN(parsed.getTime())) return ''
+  if (parsed.getFullYear() !== year || parsed.getMonth() + 1 !== month || parsed.getDate() !== day) return ''
+
+  return normalized
+}
+
 function sortRecordsByDateDesc(items) {
   return [...items].sort((a, b) => {
     const first = String(a.recordDate || a.date || '')
@@ -33,8 +59,9 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
   const [diseases, setDiseases] = useState([])
   const [openRecordId, setOpenRecordId] = useState(null)
   const [showCreateRecordForm, setShowCreateRecordForm] = useState(false)
-  const [newRecordDate, setNewRecordDate] = useState(getTodayDateInputValue())
+  const [newRecordDate, setNewRecordDate] = useState(formatDateForDisplay(getTodayDateInputValue()))
   const patientPhotoInputRef = useRef(null)
+  const recordDatePickerRef = useRef(null)
 
   const [patientHealth, setPatientHealth] = useState({
     allergies: patient?.allergies || [],
@@ -55,7 +82,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
           setRecords(sortRecordsByDateDesc(data))
           setOpenRecordId(null)
           setShowCreateRecordForm(false)
-          setNewRecordDate(getTodayDateInputValue())
+          setNewRecordDate(formatDateForDisplay(getTodayDateInputValue()))
         }
       } catch (err) {
         if (active) setRecordError(err.message || 'Unable to load records.')
@@ -119,8 +146,20 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
   }
 
   async function handleAddRecord() {
+    const selectedDate = parseManualDateInput(newRecordDate)
+    const today = getTodayDateInputValue()
+
+    if (!selectedDate) {
+      setRecordError('Enter a valid record date in MM/DD/YYYY format.')
+      return
+    }
+
+    if (selectedDate > today) {
+      setRecordError('Record date cannot be later than today.')
+      return
+    }
+
     const payload = new FormData()
-    const selectedDate = newRecordDate || getTodayDateInputValue()
 
     payload.append('recordDate', selectedDate)
     payload.append('bpVal', '')
@@ -135,7 +174,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     setRecords(prev => sortRecordsByDateDesc([created, ...prev]))
     setOpenRecordId(created.id)
     setShowCreateRecordForm(false)
-    setNewRecordDate(getTodayDateInputValue())
+    setNewRecordDate(formatDateForDisplay(getTodayDateInputValue()))
+    setRecordError('')
   }
 
   async function handleSaveRecord(recordId, form, photoFile) {
@@ -371,7 +411,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                   className="pi-new-btn"
                   onClick={() => {
                     setShowCreateRecordForm(open => !open)
-                    setNewRecordDate(current => current || getTodayDateInputValue())
+                    setNewRecordDate(current => current || formatDateForDisplay(getTodayDateInputValue()))
                   }}
                   type="button"
                 >
@@ -385,14 +425,51 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                 <label className="pi-record-create-label" htmlFor="pi-new-record-date">
                   Record date
                 </label>
-                <input
-                  id="pi-new-record-date"
-                  className="pi-record-create-input"
-                  type="date"
-                  value={newRecordDate}
-                  max={getTodayDateInputValue()}
-                  onChange={e => setNewRecordDate(e.target.value)}
-                />
+                <div className="pi-record-create-input-wrap">
+                  <input
+                    id="pi-new-record-date"
+                    className="pi-record-create-input"
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="MM/DD/YYYY"
+                    value={newRecordDate}
+                    onChange={e => {
+                      setNewRecordDate(e.target.value)
+                      setRecordError('')
+                    }}
+                    onBlur={() => {
+                      const normalized = parseManualDateInput(newRecordDate)
+                      if (normalized) setNewRecordDate(formatDateForDisplay(normalized))
+                    }}
+                  />
+                  <button
+                    className="pi-record-create-picker-btn"
+                    type="button"
+                    aria-label="Open calendar"
+                    onClick={() => {
+                      if (typeof recordDatePickerRef.current?.showPicker === 'function') {
+                        recordDatePickerRef.current.showPicker()
+                        return
+                      }
+                      recordDatePickerRef.current?.click()
+                    }}
+                  >
+                    <span aria-hidden="true">📅</span>
+                  </button>
+                  <input
+                    ref={recordDatePickerRef}
+                    className="pi-record-create-native-picker"
+                    type="date"
+                    value={parseManualDateInput(newRecordDate) || ''}
+                    max={getTodayDateInputValue()}
+                    tabIndex={-1}
+                    aria-hidden="true"
+                    onChange={e => {
+                      setNewRecordDate(formatDateForDisplay(e.target.value))
+                      setRecordError('')
+                    }}
+                  />
+                </div>
                 <button className="pi-record-create-btn" onClick={handleAddRecord} type="button">
                   Create record
                 </button>
