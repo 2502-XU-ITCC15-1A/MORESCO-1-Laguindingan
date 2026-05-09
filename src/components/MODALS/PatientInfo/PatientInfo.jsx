@@ -10,6 +10,18 @@ import './PatientInfo.css'
 
 const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
+function getTodayDateInputValue() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+function sortRecordsByDateDesc(items) {
+  return [...items].sort((a, b) => {
+    const first = String(a.recordDate || a.date || '')
+    const second = String(b.recordDate || b.date || '')
+    return second.localeCompare(first)
+  })
+}
+
 function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient = false }) {
   const [activeTab, setActiveTab] = useState('personal')
   const [filterMonth, setFilterMonth] = useState('')
@@ -20,6 +32,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
   const [zoomPhoto, setZoomPhoto] = useState(false)
   const [diseases, setDiseases] = useState([])
   const [openRecordId, setOpenRecordId] = useState(null)
+  const [showCreateRecordForm, setShowCreateRecordForm] = useState(false)
+  const [newRecordDate, setNewRecordDate] = useState(getTodayDateInputValue())
   const patientPhotoInputRef = useRef(null)
 
   const [patientHealth, setPatientHealth] = useState({
@@ -38,8 +52,10 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
       try {
         const data = await recordsAPI.getAll(patient.id)
         if (active) {
-          setRecords(data)
+          setRecords(sortRecordsByDateDesc(data))
           setOpenRecordId(null)
+          setShowCreateRecordForm(false)
+          setNewRecordDate(getTodayDateInputValue())
         }
       } catch (err) {
         if (active) setRecordError(err.message || 'Unable to load records.')
@@ -104,9 +120,9 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
 
   async function handleAddRecord() {
     const payload = new FormData()
-    const today = new Date().toISOString().slice(0, 10)
+    const selectedDate = newRecordDate || getTodayDateInputValue()
 
-    payload.append('recordDate', today)
+    payload.append('recordDate', selectedDate)
     payload.append('bpVal', '')
     payload.append('o2Val', '')
     payload.append('hrVal', '')
@@ -116,8 +132,10 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     payload.append('remarks', '')
 
     const created = await recordsAPI.create(patient.id, payload)
-    setRecords(prev => [created, ...prev])
+    setRecords(prev => sortRecordsByDateDesc([created, ...prev]))
     setOpenRecordId(created.id)
+    setShowCreateRecordForm(false)
+    setNewRecordDate(getTodayDateInputValue())
   }
 
   async function handleSaveRecord(recordId, form, photoFile) {
@@ -349,11 +367,37 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
               </div>
 
               {canEditPatient && (
-                <button className="pi-new-btn" onClick={handleAddRecord} type="button">
-                  New
+                <button
+                  className="pi-new-btn"
+                  onClick={() => {
+                    setShowCreateRecordForm(open => !open)
+                    setNewRecordDate(current => current || getTodayDateInputValue())
+                  }}
+                  type="button"
+                >
+                  {showCreateRecordForm ? 'Close' : 'New'}
                 </button>
               )}
             </div>
+
+            {canEditPatient && showCreateRecordForm && (
+              <div className="pi-record-create-bar">
+                <label className="pi-record-create-label" htmlFor="pi-new-record-date">
+                  Record date
+                </label>
+                <input
+                  id="pi-new-record-date"
+                  className="pi-record-create-input"
+                  type="date"
+                  value={newRecordDate}
+                  max={getTodayDateInputValue()}
+                  onChange={e => setNewRecordDate(e.target.value)}
+                />
+                <button className="pi-record-create-btn" onClick={handleAddRecord} type="button">
+                  Create record
+                </button>
+              </div>
+            )}
 
             <div className="pi-records-list">
               {loadingRecords && <div className="pi-no-records">Loading records...</div>}
