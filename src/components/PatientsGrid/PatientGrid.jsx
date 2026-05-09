@@ -18,6 +18,7 @@ function PatientGrid() {
   const [speedDialOpen, setSpeedDialOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [reloadKey, setReloadKey] = useState(0)
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const canManagePatients = isCompanyNurse(user.role)
   const canOpenDiseaseManager = canManageDiseases(user.role)
@@ -26,8 +27,16 @@ function PatientGrid() {
     let active = true
 
     async function loadPatients() {
+      if (active) {
+        setLoading(true)
+        setError('')
+      }
+
       try {
-        const data = await patientsAPI.getAll()
+        const data = await patientsAPI.getAll({
+          q: search.trim(),
+          sort,
+        })
         if (active) setPatients(data)
       } catch (err) {
         if (active) setError(err.message || 'Unable to load patients.')
@@ -36,40 +45,23 @@ function PatientGrid() {
       }
     }
 
-    loadPatients()
-    return () => { active = false }
-  }, [])
+    const timeoutId = setTimeout(loadPatients, 250)
+    return () => {
+      active = false
+      clearTimeout(timeoutId)
+    }
+  }, [search, sort, reloadKey])
 
-  const filtered = patients
-    .filter(p => {
-      const q = search.trim().toLowerCase()
-      if (!q) return true
-      const names = [p.firstName, p.middleName, p.lastName].filter(Boolean).map(name => String(name).toLowerCase())
-      const fullName = `${p.firstName || ''} ${p.middleName || ''} ${p.lastName || ''}`.replace(/\s+/g, ' ').trim().toLowerCase()
-      return (
-        names.some(name => name.startsWith(q)) ||
-        fullName.startsWith(q) ||
-        String(p.idNumber || '').toLowerCase().includes(q)
-      )
-    })
-    .sort((a, b) => {
-      switch (sort) {
-        case 'name-asc': return `${a.firstName} ${a.lastName}`.localeCompare(`${b.firstName} ${b.lastName}`)
-        case 'name-desc': return `${b.firstName} ${b.lastName}`.localeCompare(`${a.firstName} ${a.lastName}`)
-        case 'id-asc': return String(a.idNumber).localeCompare(String(b.idNumber))
-        default: return 0
-      }
-    })
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PATIENTS_PER_PAGE))
+  const totalPages = Math.max(1, Math.ceil(patients.length / PATIENTS_PER_PAGE))
   const safePage = Math.min(currentPage, totalPages)
   const pageStart = (safePage - 1) * PATIENTS_PER_PAGE
-  const paginated = filtered.slice(pageStart, pageStart + PATIENTS_PER_PAGE)
+  const paginated = patients.slice(pageStart, pageStart + PATIENTS_PER_PAGE)
 
   async function handleAddPatient(formData) {
-    const created = await patientsAPI.create(formData)
-    setPatients(prev => [...prev, created])
+    await patientsAPI.create(formData)
     setShowAddModal(false)
+    setCurrentPage(1)
+    setReloadKey(key => key + 1)
   }
 
   function handlePatientUpdated(updatedPatient) {
@@ -80,7 +72,7 @@ function PatientGrid() {
 
   async function handleDeletePatient(patientId) {
     await patientsAPI.delete(patientId)
-    setPatients(prev => prev.filter(patient => patient.id !== patientId))
+    setReloadKey(key => key + 1)
   }
 
   function getPageNumbers() {

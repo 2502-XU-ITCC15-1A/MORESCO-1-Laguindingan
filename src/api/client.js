@@ -50,7 +50,13 @@ export const authAPI = {
 };
 
 export const patientsAPI = {
-  getAll: () => apiClient('/patients'),
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams()
+    if (filters.q) params.set('q', filters.q)
+    if (filters.sort) params.set('sort', filters.sort)
+      // fixed api not searching in database 
+    return apiClient(`/patients${params.toString() ? `?${params.toString()}` : ''}`)
+  },
   getOne: (id) => apiClient(`/patients/${id}`),
   create: (formData) => apiClient('/patients', { method: 'POST', body: formData }),
   update: (id, formData) => apiClient(`/patients/${id}`, { method: 'PUT', body: formData }),

@@ -11,24 +11,42 @@ import diseaseRoutes from './routes/diseases.js'
 
 const app = express()
 const port = process.env.PORT || 5000
-// change it so that it can handle multiple origins
+
 const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
   .split(',').map(o => o.trim());
 
-app.use(cors({
+function isAllowedOrigin(origin) {
+  return allowedOrigins.some((allowedOrigin) => {
+    if (allowedOrigin === '*') return true
+    if (allowedOrigin === origin) return true
+
+    if (allowedOrigin.includes('*')) {
+      const pattern = allowedOrigin
+        .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+        .replace(/\*/g, '.*')
+      return new RegExp(`^${pattern}$`).test(origin)
+    }
+
+    return false
+  })
+}
+
+const corsMiddleware = cors({
   origin: (origin, callback) => {
     if (!origin) return callback(null, true);
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
     return callback(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
-}))
+})
+
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 
+app.use('/api', corsMiddleware)
 app.use('/api/auth', authRoutes)
 app.use('/api/patients', patientRoutes)
 app.use('/api/records', recordRoutes)

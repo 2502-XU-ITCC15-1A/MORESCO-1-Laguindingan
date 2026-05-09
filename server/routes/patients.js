@@ -87,7 +87,36 @@ function patientData(body, req) {
 
 router.get('/', auth, async (req, res) => {
   try {
-    const result = await query('SELECT * FROM patients ORDER BY last_name ASC, first_name ASC')
+    const rawSearch = String(req.query.q || '').trim()
+    const sort = String(req.query.sort || 'name-asc')
+    const whereClauses = []
+    const values = []
+
+    if (rawSearch) {
+      values.push(`%${rawSearch}%`)
+      const searchParam = `$${values.length}`
+      whereClauses.push(`(
+        first_name ILIKE ${searchParam}
+        OR middle_name ILIKE ${searchParam}
+        OR last_name ILIKE ${searchParam}
+        OR CONCAT_WS(' ', first_name, middle_name, last_name) ILIKE ${searchParam}
+        OR id_number ILIKE ${searchParam}
+        OR position ILIKE ${searchParam}
+      )`)
+    }
+
+    let orderBy = 'last_name ASC, first_name ASC'
+    if (sort === 'name-desc') {
+      orderBy = 'last_name DESC, first_name DESC'
+    } else if (sort === 'id-asc') {
+      orderBy = 'id_number ASC, last_name ASC, first_name ASC'
+    }
+
+    const whereSql = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : ''
+    const result = await query(
+      `SELECT * FROM patients ${whereSql} ORDER BY ${orderBy}`,
+      values,
+    )
     const ids = result.rows.map(row => row.id)
     const { allergiesByPatient, chronicByPatient } = await loadPatientRelations(ids)
     const patients = result.rows.map(row => rowToPatient(
