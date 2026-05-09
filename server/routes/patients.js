@@ -85,6 +85,10 @@ function patientData(body, req) {
   }
 }
 
+function escapeLike(value) {
+  return value.replace(/[\\%_]/g, '\\$&')
+}
+
 router.get('/', auth, async (req, res) => {
   try {
     const rawSearch = String(req.query.q || '').trim()
@@ -93,15 +97,26 @@ router.get('/', auth, async (req, res) => {
     const values = []
 
     if (rawSearch) {
-      values.push(`%${rawSearch}%`)
-      const searchParam = `$${values.length}`
+      const normalizedSearch = rawSearch.replace(/\s+/g, ' ').trim()
+      const startsWithPattern = `${escapeLike(normalizedSearch)}%`
+      const containsWordPattern = `% ${escapeLike(normalizedSearch)}%`
+
+      values.push(startsWithPattern)
+      const startsWithParam = `$${values.length}`
+      values.push(containsWordPattern)
+      const containsWordParam = `$${values.length}`
+
       whereClauses.push(`(
-        first_name ILIKE ${searchParam}
-        OR middle_name ILIKE ${searchParam}
-        OR last_name ILIKE ${searchParam}
-        OR CONCAT_WS(' ', first_name, middle_name, last_name) ILIKE ${searchParam}
-        OR id_number ILIKE ${searchParam}
-        OR position ILIKE ${searchParam}
+        first_name ILIKE ${startsWithParam} ESCAPE '\\'
+        OR middle_name ILIKE ${startsWithParam} ESCAPE '\\'
+        OR last_name ILIKE ${startsWithParam} ESCAPE '\\'
+        OR CONCAT_WS(' ', first_name, last_name) ILIKE ${startsWithParam} ESCAPE '\\'
+        OR CONCAT_WS(' ', first_name, last_name) ILIKE ${containsWordParam} ESCAPE '\\'
+        OR CONCAT_WS(' ', first_name, middle_name, last_name) ILIKE ${startsWithParam} ESCAPE '\\'
+        OR CONCAT_WS(' ', first_name, middle_name, last_name) ILIKE ${containsWordParam} ESCAPE '\\'
+        OR id_number ILIKE ${startsWithParam} ESCAPE '\\'
+        OR position ILIKE ${startsWithParam} ESCAPE '\\'
+        OR position ILIKE ${containsWordParam} ESCAPE '\\'
       )`)
     }
 

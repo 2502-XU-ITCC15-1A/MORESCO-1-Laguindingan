@@ -5,7 +5,7 @@
   overflow: hidden;
   background-image:
     linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
-    url("https://moresco1.com/wp-content/uploads/2025/11/ChatGPT-Image-Nov-6-2025-02_51_02-PM.png");
+    url("../../assets/real_moresco_building.png");
   background-size: cover;
   background-position: center;
   position: relative;
