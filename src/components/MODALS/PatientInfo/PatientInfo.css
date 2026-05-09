@@ -340,6 +340,52 @@
   font-family: inherit;
 }
 
+.pi-record-create-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border: 1px solid #dbe3f0;
+  border-radius: 10px;
+  background: #f8fbff;
+}
+
+.pi-record-create-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+  white-space: nowrap;
+}
+
+.pi-record-create-input {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #111827;
+  background: white;
+  font-family: inherit;
+}
+
+.pi-record-create-btn {
+  min-height: 38px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  background: #0d2b77;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pi-record-create-btn:hover {
+  opacity: 0.9;
+}
+
 .pi-records-list {
   flex: 1;
   overflow-y: auto;
@@ -409,8 +455,15 @@
     width: 100%;
   }
 
+  .pi-record-create-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
   .pi-records-filters select,
-  .pi-new-btn {
+  .pi-new-btn,
+  .pi-record-create-input,
+  .pi-record-create-btn {
     width: 100%;
   }
 
