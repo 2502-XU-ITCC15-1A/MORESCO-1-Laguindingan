@@ -11,6 +11,7 @@ function DiseaseManager({ show, onClose }) {
 
   useEffect(() => {
     if (!show) return
+    setError('')
     diseasesAPI.getAll()
       .then(setDiseases)
       .catch(err => setError(err.message || 'Unable to load diseases.'))
@@ -33,8 +34,13 @@ function DiseaseManager({ show, onClose }) {
   }
 
   async function handleDelete(id) {
-    await diseasesAPI.delete(id)
-    setDiseases(prev => prev.filter(item => item.id !== id))
+    setError('')
+    try {
+      await diseasesAPI.delete(id)
+      setDiseases(prev => prev.filter(item => item.id !== id))
+    } catch (err) {
+      setError(err.message || 'Unable to delete disease.')
+    }
   }
 
   return (
@@ -56,7 +62,9 @@ function DiseaseManager({ show, onClose }) {
                 <strong>{disease.name}</strong>
                 <span>{disease.aliases?.length ? disease.aliases.join(', ') : 'No aliases'}</span>
               </div>
-              <button onClick={() => handleDelete(disease.id)}>Delete</button>
+              <button className="disease-delete-btn" onClick={() => handleDelete(disease.id)} type="button">
+                Delete
+              </button>
             </div>
           ))}
         </div>

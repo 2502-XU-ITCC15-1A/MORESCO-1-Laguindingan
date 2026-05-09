@@ -1,4 +1,5 @@
-const API_BASE = '/api';
+// If they're on the same server, this line doesn't hurt anything
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 async function apiClient(endpoint, options = {}) {
   const token = localStorage.getItem('token');
@@ -13,7 +14,7 @@ async function apiClient(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  // ✅ CRITICAL FIX: Set Content-Type for JSON requests only
+  //  CRITICAL FIX: Set Content-Type for JSON requests only
   // If body is FormData, let the browser set the correct multipart header
   if (options.body && !(options.body instanceof FormData)) {
     headers['Content-Type'] = 'application/json';
@@ -49,7 +50,13 @@ export const authAPI = {
 };
 
 export const patientsAPI = {
-  getAll: () => apiClient('/patients'),
+  getAll: (filters = {}) => {
+    const params = new URLSearchParams()
+    if (filters.q) params.set('q', filters.q)
+    if (filters.sort) params.set('sort', filters.sort)
+      // fixed api not searching in database 
+    return apiClient(`/patients${params.toString() ? `?${params.toString()}` : ''}`)
+  },
   getOne: (id) => apiClient(`/patients/${id}`),
   create: (formData) => apiClient('/patients', { method: 'POST', body: formData }),
   update: (id, formData) => apiClient(`/patients/${id}`, { method: 'PUT', body: formData }),
