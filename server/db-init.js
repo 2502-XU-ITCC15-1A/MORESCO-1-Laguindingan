@@ -16,8 +16,15 @@ const statements = [
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       username TEXT NOT NULL UNIQUE,
+      email TEXT,
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL,
+      access_status TEXT NOT NULL DEFAULT 'active',
+      invitation_token TEXT,
+      invited_by INTEGER REFERENCES users(id),
+      invitation_sent_at TIMESTAMP(3),
+      access_granted_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      invitation_confirmed_at TIMESTAMP(3),
       created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -37,6 +44,26 @@ const statements = [
         ALTER TABLE users RENAME COLUMN "passwordHash" TO password_hash;
       END IF;
     END $$;
+  `,
+  `
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS email TEXT,
+    ADD COLUMN IF NOT EXISTS access_status TEXT NOT NULL DEFAULT 'active',
+    ADD COLUMN IF NOT EXISTS invitation_token TEXT,
+    ADD COLUMN IF NOT EXISTS invited_by INTEGER REFERENCES users(id),
+    ADD COLUMN IF NOT EXISTS invitation_sent_at TIMESTAMP(3),
+    ADD COLUMN IF NOT EXISTS access_granted_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS invitation_confirmed_at TIMESTAMP(3);
+  `,
+  `
+    CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx
+    ON users (LOWER(email))
+    WHERE email IS NOT NULL;
+  `,
+  `
+    CREATE UNIQUE INDEX IF NOT EXISTS users_invitation_token_unique_idx
+    ON users (invitation_token)
+    WHERE invitation_token IS NOT NULL;
   `,
   `
     CREATE TABLE IF NOT EXISTS patients (
