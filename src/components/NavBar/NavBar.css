@@ -20,20 +20,20 @@
   width: 68px;
   height: 68px;
   border-radius: 50%;
-  background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 7px;
-  border: 2px solid rgba(74,159,255,0.75);
-  box-shadow: 0 0 12px rgba(74,159,255,0.35);
   flex-shrink: 0;
 }
 
 .nav-logo-circle img {
   width: 100%;
   height: 100%;
+  border-radius: 50%;
+  background: white;
   object-fit: contain;
+  padding: 4px;
+  border: 1px solid rgba(74, 159, 255, 0.9);
 }
 
 .nav-system-name {
@@ -251,8 +251,8 @@
   border-radius: 50%;
   background: white;
   object-fit: contain;
-  padding: 5px;
-  border: 2px solid #4a9fff;
+  padding: 4px;
+  border: 1px solid rgba(74, 159, 255, 0.9);
   flex-shrink: 0;
 }
 
