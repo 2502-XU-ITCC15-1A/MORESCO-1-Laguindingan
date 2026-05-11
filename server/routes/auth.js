@@ -8,22 +8,33 @@ const router = express.Router()
 
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body
-    if (!username || !password) {
-      return res.status(400).json({ message: 'Username and password are required' })
+    const { username, identifier, password } = req.body
+    const loginValue = String(identifier || username || '').trim()
+
+    if (!loginValue || !password) {
+      return res.status(400).json({ message: 'Username or email and password are required' })
     }
 
     const result = await query(
-      'SELECT id, username, password_hash, role FROM users WHERE username = $1 LIMIT 1',
-      [username.trim()],
+      `
+        SELECT id, username, email, password_hash, role, access_status
+        FROM users
+        WHERE username = $1 OR LOWER(email) = LOWER($1)
+        LIMIT 1
+      `,
+      [loginValue],
     )
     const user = result.rows[0]
 
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-      return res.status(401).json({ message: 'Invalid username or password' })
+      return res.status(401).json({ message: 'Invalid username/email or password' })
     }
 
-    const payload = { id: user.id, username: user.username, role: user.role }
+    if (user.access_status !== 'active') {
+      return res.status(403).json({ message: 'This account is inactive. Please contact the IT Manager.' })
+    }
+
+    const payload = { id: user.id, username: user.username, email: user.email, role: user.role }
     const token = jwt.sign(
       payload,
       process.env.JWT_SECRET || 'dev-secret-change-me',

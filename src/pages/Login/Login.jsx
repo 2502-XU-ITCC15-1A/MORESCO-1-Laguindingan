@@ -5,7 +5,7 @@ import moresco1Logo from '../../assets/logo.png'
 import './Login.css'
 
 function Login() {
-  const [username, setUsername] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -15,14 +15,14 @@ function Login() {
     e.preventDefault()
     setError('')
 
-    if (!username || !password) {
+    if (!identifier || !password) {
       setError('Please enter your username and password.')
       return
     }
 
     setLoading(true)
     try {
-      const { token, user } = await authAPI.login(username.trim(), password)
+      const { token, user } = await authAPI.login(identifier.trim(), password)
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
       navigate('/patients')
@@ -54,8 +54,8 @@ function Login() {
             <input
               className="login-input"
               type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
+              value={identifier}
+              onChange={e => setIdentifier(e.target.value)}
               autoComplete="username"
               placeholder="Enter username"
             />

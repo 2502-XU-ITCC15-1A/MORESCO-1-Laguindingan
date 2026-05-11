@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import { recordsAPI } from '../../api/client.js'
-import { roleLabel } from '../../utils/roles.js'
+import { canManageUserAccess, roleLabel } from '../../utils/roles.js'
 import morescoLogo from '../../assets/logo.png'
 import './NavBar.css'
 
@@ -38,10 +38,14 @@ function NavBar({ showDrawer = true }) {
   const [stats, setStats] = useState({ total: 0, stats: [] })
   const [statsError, setStatsError] = useState('')
   const profileMenuRef = useRef(null)
+  const location = useLocation()
   const navigate = useNavigate()
   const user = getCurrentUser()
   const displayName = 'Moresco-1'
   const displayRole = roleLabel(user.role)
+  const hasUserAccessTab = canManageUserAccess(user.role)
+  const onPatientsPage = location.pathname === '/patients'
+  const onUserAccessPage = location.pathname === '/user-access'
   const initials = displayName.split(/[.\s]+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'M'
 
   useEffect(() => {
@@ -96,13 +100,35 @@ function NavBar({ showDrawer = true }) {
         </div>
 
         <div className="nav-center">
-          <button
-            className="nav-page-badge"
-            onClick={() => (showDrawer ? setDrawerOpen(true) : navigate('/patients'))}
-            title={showDrawer ? 'Open disease statistics drawer' : 'Go to patients page'}
-          >
-            {showDrawer ? 'Patients' : 'Back to Patients'}
-          </button>
+          {hasUserAccessTab ? (
+            <div className="nav-tab-group" aria-label="System pages">
+              <button
+                className={`nav-page-badge ${onPatientsPage ? 'active' : ''}`}
+                onClick={() => (onPatientsPage && showDrawer ? setDrawerOpen(true) : navigate('/patients'))}
+                title={onPatientsPage && showDrawer ? 'Open disease statistics drawer' : 'Go to patients page'}
+                type="button"
+              >
+                Patients
+              </button>
+              <button
+                className={`nav-page-badge ${onUserAccessPage ? 'active' : ''}`}
+                onClick={() => navigate('/user-access')}
+                title="Open user access management"
+                type="button"
+              >
+                User Access
+              </button>
+            </div>
+          ) : (
+            <button
+              className="nav-page-badge"
+              onClick={() => (showDrawer ? setDrawerOpen(true) : navigate('/patients'))}
+              title={showDrawer ? 'Open disease statistics drawer' : 'Go to patients page'}
+              type="button"
+            >
+              {showDrawer ? 'Patients' : 'Back to Patients'}
+            </button>
+          )}
         </div>
 
         <div className="nav-end" ref={profileMenuRef}>
