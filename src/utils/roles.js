@@ -10,10 +10,25 @@ export function isCompanyNurse(role) {
   return normalizeRole(role) === 'company nurse'
 }
 
+export function isItManager(role) {
+  return normalizeRole(role) === 'it manager'
+}
+
+export function canManagePatients(role) {
+  return isCompanyNurse(role) || isItManager(role)
+}
+
 export function canManageDiseases(role) {
-  return isHrAdmin(role) || isCompanyNurse(role)
+  return isHrAdmin(role) || isCompanyNurse(role) || isItManager(role)
+}
+
+export function canManageUserAccess(role) {
+  return isItManager(role)
 }
 
 export function roleLabel(role) {
-  return isHrAdmin(role) ? 'HR Admin' : isCompanyNurse(role) ? 'Company Nurse' : role || 'Company Nurse'
+  if (isHrAdmin(role)) return 'HR Admin'
+  if (isCompanyNurse(role)) return 'Company Nurse'
+  if (isItManager(role)) return 'IT Manager'
+  return role || 'Company Nurse'
 }

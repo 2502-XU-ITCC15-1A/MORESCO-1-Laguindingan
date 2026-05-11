@@ -4,8 +4,9 @@ import { initDb } from './db-init.js'
 import { SAMPLE_PATIENTS, SAMPLE_RECORDS } from '../src/data/patients.js'
 
 const USERS = [
-  { username: 'admin', password: 'admin123', role: 'HR Admin' },
-  { username: 'nurse1', password: 'nurse123', role: 'Company Nurse' },
+  { username: 'admin', email: 'admin@moresco.local', password: 'admin123', role: 'HR Admin' },
+  { username: 'nurse1', email: 'nurse1@moresco.local', password: 'nurse123', role: 'Company Nurse' },
+  { username: 'itmanager', email: 'itmanager@moresco.local', password: 'itmanager123', role: 'IT Manager' },
 ]
 
 const DISEASES = [
@@ -36,15 +37,22 @@ async function seedUsers() {
     const passwordHash = await bcrypt.hash(user.password, 10)
     await query(
       `
-        INSERT INTO users (username, password_hash, role, updated_at)
-        VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+        INSERT INTO users (
+          username, email, password_hash, role, access_status,
+          access_granted_at, invitation_confirmed_at, updated_at
+        )
+        VALUES ($1, $2, $3, $4, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ON CONFLICT (username)
         DO UPDATE SET
+          email = EXCLUDED.email,
           password_hash = EXCLUDED.password_hash,
           role = EXCLUDED.role,
+          access_status = 'active',
+          access_granted_at = COALESCE(users.access_granted_at, CURRENT_TIMESTAMP),
+          invitation_confirmed_at = COALESCE(users.invitation_confirmed_at, CURRENT_TIMESTAMP),
           updated_at = CURRENT_TIMESTAMP
       `,
-      [user.username, passwordHash, user.role],
+      [user.username, user.email, passwordHash, user.role],
     )
   }
 }

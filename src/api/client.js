@@ -42,10 +42,10 @@ async function apiClient(endpoint, options = {}) {
 export default apiClient;
 
 export const authAPI = {
-  login: (username, password) =>
+  login: (identifier, password) =>
     apiClient('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ username, password }),
+      body: JSON.stringify({ identifier, password }),
     }),
 };
 
@@ -84,4 +84,19 @@ export const diseasesAPI = {
     body: JSON.stringify(data),
   }),
   delete: (id) => apiClient(`/diseases/${id}`, { method: 'DELETE' }),
+};
+
+export const accessAPI = {
+  getUsers: () => apiClient('/access/users'),
+  createUser: (data) => apiClient('/access/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }),
+  updateUser: (userId, data) => apiClient(`/access/users/${userId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  }),
+  deleteUser: (userId) => apiClient(`/access/users/${userId}`, {
+    method: 'DELETE',
+  }),
 };
