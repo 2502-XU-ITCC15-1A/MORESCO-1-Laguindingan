@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import { recordsAPI } from '../../api/client.js'
-import { canManageUserAccess, roleLabel } from '../../utils/roles.js'
+import { canAccessPatients, canManageUserAccess, roleLabel } from '../../utils/roles.js'
 import morescoLogo from '../../assets/logo.png'
 import './NavBar.css'
 
@@ -43,6 +43,7 @@ function NavBar({ showDrawer = true }) {
   const user = getCurrentUser()
   const displayName = 'Moresco-1'
   const displayRole = roleLabel(user.role)
+  const hasPatientsAccess = canAccessPatients(user.role)
   const hasUserAccessTab = canManageUserAccess(user.role)
   const onPatientsPage = location.pathname === '/patients'
   const onUserAccessPage = location.pathname === '/user-access'
@@ -100,12 +101,12 @@ function NavBar({ showDrawer = true }) {
         </div>
 
         <div className="nav-center">
-          {hasUserAccessTab ? (
+          {hasPatientsAccess && hasUserAccessTab ? (
             <div className="nav-tab-group" aria-label="System pages">
               <button
                 className={`nav-page-badge ${onPatientsPage ? 'active' : ''}`}
-                onClick={() => (onPatientsPage && showDrawer ? setDrawerOpen(true) : navigate('/patients'))}
-                title={onPatientsPage && showDrawer ? 'Open disease statistics drawer' : 'Go to patients page'}
+                onClick={() => navigate('/patients')}
+                title="Go to patients page"
                 type="button"
               >
                 Patients
@@ -119,14 +120,32 @@ function NavBar({ showDrawer = true }) {
                 User Access
               </button>
             </div>
+          ) : hasPatientsAccess ? (
+            <button
+              className={`nav-page-badge ${onPatientsPage ? 'active' : ''}`}
+              onClick={() => navigate('/patients')}
+              title="Go to patients page"
+              type="button"
+            >
+              Patients
+            </button>
+          ) : hasUserAccessTab ? (
+            <button
+              className={`nav-page-badge ${onUserAccessPage ? 'active' : ''}`}
+              onClick={() => navigate('/user-access')}
+              title="Open user access management"
+              type="button"
+            >
+              User Access
+            </button>
           ) : (
             <button
               className="nav-page-badge"
-              onClick={() => (showDrawer ? setDrawerOpen(true) : navigate('/patients'))}
-              title={showDrawer ? 'Open disease statistics drawer' : 'Go to patients page'}
+              onClick={() => navigate('/patients')}
+              title="Go to patients page"
               type="button"
             >
-              {showDrawer ? 'Patients' : 'Back to Patients'}
+              Back
             </button>
           )}
         </div>
@@ -155,6 +174,19 @@ function NavBar({ showDrawer = true }) {
                 </div>
 
                 <div className="nav-profile-menu-divider" />
+
+                {showDrawer && hasPatientsAccess && (
+                  <button
+                    className="nav-profile-menu-item"
+                    onClick={() => {
+                      setDrawerOpen(true)
+                      setProfileMenuOpen(false)
+                    }}
+                    type="button"
+                  >
+                    Common Disease Stats
+                  </button>
+                )}
 
                 <button className="nav-profile-menu-item logout" onClick={handleLogout} type="button">
                   Log out
