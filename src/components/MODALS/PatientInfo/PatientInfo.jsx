@@ -277,6 +277,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     <Modal
       show={show}
       onHide={onClose}
+      centered
       contentClassName="pi-modal-content"
       dialogClassName="pi-modal-dialog"
     >

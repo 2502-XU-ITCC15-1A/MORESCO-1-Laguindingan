@@ -4,6 +4,7 @@ import express from 'express'
 import fs from 'node:fs'
 import path from 'node:path'
 import { initDb } from './db-init.js'
+import { createRateLimiter } from './middleware/rateLimit.js'
 import authRoutes from './routes/auth.js'
 import patientRoutes from './routes/patients.js'
 import recordRoutes from './routes/records.js'
@@ -12,6 +13,11 @@ import accessRoutes from './routes/access.js'
 
 const app = express()
 const port = process.env.PORT || 5000
+const apiRateLimiter = createRateLimiter({
+  windowMs: Number(process.env.API_RATE_LIMIT_WINDOW_MS || 60_000),
+  maxRequests: Number(process.env.API_RATE_LIMIT_MAX || 300),
+  message: 'Too many API requests. Please slow down and try again shortly.',
+})
 
 const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173')
   .split(',').map(o => o.trim());
@@ -48,6 +54,7 @@ app.use(express.urlencoded({ extended: true }))
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')))
 
 app.use('/api', corsMiddleware)
+app.use('/api', apiRateLimiter)
 app.use('/api/auth', authRoutes)
 app.use('/api/patients', patientRoutes)
 app.use('/api/records', recordRoutes)
