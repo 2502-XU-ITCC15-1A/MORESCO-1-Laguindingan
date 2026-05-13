@@ -1,13 +1,16 @@
 .pi-modal-dialog {
   max-width: min(1360px, calc(100vw - 36px)) !important;
-  margin: 20px auto !important;
+  margin: 12px auto !important;
+  display: flex;
+  align-items: center;
+  min-height: calc(100vh - 24px);
 }
 
 .pi-modal-content {
   border-radius: 8px !important;
   border: none !important;
   overflow: hidden;
-  height: min(calc(100vh - 40px), 900px);
+  height: min(calc(100vh - 72px), 820px);
   display: flex;
   flex-direction: column;
 }
@@ -444,10 +447,11 @@
   .pi-modal-dialog {
     max-width: calc(100vw - 24px) !important;
     margin: 12px auto !important;
+    min-height: calc(100vh - 24px);
   }
 
   .pi-modal-content {
-    height: calc(100vh - 24px);
+    height: calc(100vh - 36px);
   }
 
   .pi-modal-header {
