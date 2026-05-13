@@ -8,11 +8,12 @@ import { formatRecord } from '../utils/format.js'
 const router = express.Router()
 const upload = imageUpload('records')
 
-function fileUrl(req) {
-  return req.savedFileUrl
+function fileUrls(req) {
+  return req.savedFileUrls || []
 }
 
 function rowToRecord(row) {
+  const recordImages = row.record_images || []
   return {
     id: row.id,
     patientId: row.patient_id,
@@ -25,10 +26,59 @@ function rowToRecord(row) {
     diagnosis: row.diagnosis,
     remarks: row.remarks,
     photoUrl: row.photo_url,
+    photoUrls: recordImages.length > 0
+      ? recordImages.map(image => image.photoUrl)
+      : (row.photo_urls || (row.photo_url ? [row.photo_url] : [])),
+    recordImages,
   }
 }
 
-function recordData(body, req) {
+async function loadRecordImages(recordIds) {
+  if (recordIds.length === 0) return new Map()
+
+  const result = await query(
+    `
+      SELECT id, record_id, photo_url, sort_order
+      FROM health_record_images
+      WHERE record_id = ANY($1::int[])
+      ORDER BY record_id ASC, sort_order ASC, id ASC
+    `,
+    [recordIds],
+  )
+
+  const imagesByRecord = new Map()
+
+  for (const row of result.rows) {
+    const list = imagesByRecord.get(row.record_id) || []
+    list.push({
+      id: row.id,
+      photoUrl: row.photo_url,
+      sortOrder: row.sort_order,
+    })
+    imagesByRecord.set(row.record_id, list)
+  }
+
+  return imagesByRecord
+}
+
+async function insertRecordImages(recordId, photoUrls, startOrder = 0) {
+  for (const [index, photoUrl] of photoUrls.entries()) {
+    await query(
+      'INSERT INTO health_record_images (record_id, photo_url, sort_order) VALUES ($1, $2, $3)',
+      [recordId, photoUrl, startOrder + index],
+    )
+  }
+}
+
+async function enrichRecord(row) {
+  const imagesByRecord = await loadRecordImages([row.id])
+  return rowToRecord({
+    ...row,
+    record_images: imagesByRecord.get(row.id) || [],
+  })
+}
+
+function recordData(body) {
   return {
     bpVal: body.bpVal || '',
     o2Val: body.o2Val || '',
@@ -37,8 +87,51 @@ function recordData(body, req) {
     complaints: body.complaints || '',
     diagnosis: body.diagnosis || '',
     remarks: body.remarks || '',
-    ...(fileUrl(req) ? { photoUrl: fileUrl(req) } : {}),
   }
+}
+
+function parseRetainedImageIds(value) {
+  if (Array.isArray(value)) {
+    return value.map(Number).filter(Number.isFinite)
+  }
+
+  if (!value) return null
+
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.map(Number).filter(Number.isFinite) : null
+  } catch {
+    return null
+  }
+}
+
+async function syncRecordImages(recordId, retainedImageIds, uploadedPhotos) {
+  const existingImages = await loadRecordImages([recordId])
+  const currentImages = existingImages.get(recordId) || []
+  const keepIds = retainedImageIds ?? currentImages.map(image => image.id)
+
+  await query(
+    `
+      DELETE FROM health_record_images
+      WHERE record_id = $1
+        AND NOT (id = ANY($2::int[]))
+    `,
+    [recordId, keepIds.length > 0 ? keepIds : [-1]],
+  )
+
+  const remainingImages = currentImages.filter(image => keepIds.includes(image.id))
+  await insertRecordImages(recordId, uploadedPhotos, remainingImages.length)
+
+  const refreshedImages = await loadRecordImages([recordId])
+  const finalImages = refreshedImages.get(recordId) || []
+  const primaryPhotoUrl = finalImages[0]?.photoUrl || null
+
+  await query(
+    'UPDATE health_records SET photo_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+    [primaryPhotoUrl, recordId],
+  )
+
+  return finalImages
 }
 
 router.get('/stats/diseases', auth, async (req, res) => {
@@ -104,17 +197,26 @@ router.get('/:patientId', auth, async (req, res) => {
       `,
       [patientId, month, year],
     )
+    const ids = result.rows.map(row => row.id)
+    const imagesByRecord = await loadRecordImages(ids)
 
-    res.json(result.rows.map(row => formatRecord(rowToRecord(row))))
+    res.json(result.rows.map(row => formatRecord(rowToRecord({
+      ...row,
+      record_images: imagesByRecord.get(row.id) || [],
+    }))))
   } catch (error) {
     console.error('List records error:', error)
     res.status(500).json({ message: 'Server error' })
   }
 })
 
-router.post('/:patientId', auth, requireCompanyNurse, upload.single('photo'), async (req, res) => {
+router.post('/:patientId', auth, requireCompanyNurse, upload.fields([
+  { name: 'photos', maxCount: 10 },
+  { name: 'photo', maxCount: 1 },
+]), async (req, res) => {
   try {
-    const data = recordData(req.body, req)
+    const data = recordData(req.body)
+    const uploadedPhotos = fileUrls(req)
     const result = await query(
       `
         INSERT INTO health_records (
@@ -134,19 +236,33 @@ router.post('/:patientId', auth, requireCompanyNurse, upload.single('photo'), as
         data.complaints,
         data.diagnosis,
         data.remarks,
-        data.photoUrl || null,
+        uploadedPhotos[0] || null,
       ],
     )
-    res.status(201).json(formatRecord(rowToRecord(result.rows[0])))
+    await insertRecordImages(result.rows[0].id, uploadedPhotos)
+    if (uploadedPhotos.length > 0) {
+      await query(
+        'UPDATE health_records SET photo_url = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        [uploadedPhotos[0], result.rows[0].id],
+      )
+    }
+    const refreshedRow = await query('SELECT * FROM health_records WHERE id = $1 LIMIT 1', [result.rows[0].id])
+    const record = await enrichRecord(refreshedRow.rows[0])
+    res.status(201).json(formatRecord(record))
   } catch (error) {
     console.error('Create record error:', error)
     res.status(500).json({ message: 'Server error' })
   }
 })
 
-router.put('/:recordId', auth, requireCompanyNurse, upload.single('photo'), async (req, res) => {
+router.put('/:recordId', auth, requireCompanyNurse, upload.fields([
+  { name: 'photos', maxCount: 10 },
+  { name: 'photo', maxCount: 1 },
+]), async (req, res) => {
   try {
-    const data = recordData(req.body, req)
+    const data = recordData(req.body)
+    const uploadedPhotos = fileUrls(req)
+    const retainedImageIds = parseRetainedImageIds(req.body.retainedImageIds)
     const result = await query(
       `
         UPDATE health_records
@@ -171,13 +287,16 @@ router.put('/:recordId', auth, requireCompanyNurse, upload.single('photo'), asyn
         data.complaints,
         data.diagnosis,
         data.remarks,
-        data.photoUrl || null,
+        uploadedPhotos[0] || null,
         Number(req.params.recordId),
       ],
     )
     const row = result.rows[0]
     if (!row) return res.status(404).json({ message: 'Record not found' })
-    res.json(formatRecord(rowToRecord(row)))
+    await syncRecordImages(row.id, retainedImageIds, uploadedPhotos)
+    const refreshedRow = await query('SELECT * FROM health_records WHERE id = $1 LIMIT 1', [row.id])
+    const record = await enrichRecord(refreshedRow.rows[0])
+    res.json(formatRecord(record))
   } catch (error) {
     console.error('Update record error:', error)
     res.status(500).json({ message: 'Server error' })

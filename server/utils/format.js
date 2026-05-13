@@ -66,6 +66,7 @@ export function formatPatient(patient) {
 }
 
 export function formatRecord(record) {
+  const recordImages = record.recordImages || []
   return {
     id: record.id,
     patientId: record.patientId,
@@ -79,5 +80,7 @@ export function formatRecord(record) {
     diagnosis: record.diagnosis || '',
     remarks: record.remarks || '',
     photoUrl: record.photoUrl || '',
+    photoUrls: record.photoUrls || (record.photoUrl ? [record.photoUrl] : []),
+    recordImages,
   }
 }
