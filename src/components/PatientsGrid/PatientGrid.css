@@ -5,17 +5,11 @@
   overflow: hidden;
   background-image:
     linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.45)),
-    url("https://moresco1.com/wp-content/uploads/2025/11/ChatGPT-Image-Nov-6-2025-02_51_02-PM.png");
+    url("../../assets/real_moresco_building.png");
   background-size: cover;
   background-position: center;
-  animation: bgZoom 16s ease-in-out infinite;
   position: relative;
   padding: 16px 24px 0;
-}
-
-@keyframes bgZoom {
-  0%, 100% { background-size: 100%; }
-  50%       { background-size: 112%; }
 }
 
 /* Toolbar */
@@ -138,11 +132,37 @@
   text-align: center;
 }
 
-/* FAB Add Button */
-.fab-add {
+.speed-dial {
   position: fixed;
   bottom: 30px;
   right: 30px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+.speed-dial-menu {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.speed-dial-menu button {
+  min-width: 132px;
+  padding: 10px 14px;
+  border: 1px solid #4a9fff;
+  border-radius: 8px;
+  background: #0D2B77;
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(0,0,0,0.35);
+}
+
+/* FAB Add Button */
+.fab-add {
   width: 54px;
   height: 54px;
   border-radius: 50%;
@@ -154,7 +174,6 @@
   cursor: pointer;
   box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   transition: transform 0.2s, box-shadow 0.2s;
-  z-index: 100;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -1,0 +1,128 @@
+.disease-modal {
+  border-radius: 8px;
+  overflow: hidden;
+  border: none;
+}
+
+.disease-header {
+  background: #00006F;
+  color: white;
+  border: none;
+  padding: 16px 22px;
+}
+
+.disease-header h2 {
+  font-size: 20px;
+  margin: 0;
+}
+
+.disease-body {
+  padding: 18px !important;
+}
+
+/* ─── FIXED FORM LAYOUT ─── */
+.disease-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  align-items: center;
+}
+
+.disease-form input {
+  flex: 1;
+  height: 42px;
+  padding: 0 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.disease-form input:focus {
+  border-color: #00006F;
+  box-shadow: 0 0 0 3px rgba(0, 0, 111, 0.1);
+}
+
+.disease-form button {
+  height: 42px;
+  padding: 0 24px;
+  background: #00006F;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 14px;
+  flex-shrink: 0;
+  transition: background 0.2s, transform 0.1s;
+}
+
+.disease-form button:hover {
+  background: #0a0aaa;
+  opacity: 0.9;
+}
+
+.disease-form button:active {
+  transform: scale(0.96);
+}
+
+/* ─── LIST ─── */
+.disease-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.disease-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 12px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+}
+
+.disease-item div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+}
+
+.disease-item strong {
+  color: #111827;
+}
+
+.disease-item span {
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.disease-delete-btn {
+  background: transparent;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+
+.disease-delete-btn:hover {
+  background: #fee2e2;
+  border-color: #ef4444;
+}
+
+/* ─── IMPROVED DELETE BUTTON ─── */
+.disease-error {
+  color: #b91c1c;
+  font-size: 13px;
+}
