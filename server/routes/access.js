@@ -7,6 +7,7 @@ import { query } from '../db.js'
 const router = express.Router()
 const AVAILABLE_ROLES = new Set(['HR Admin', 'Company Nurse', 'IT Manager'])
 const AVAILABLE_STATUSES = new Set(['active', 'inactive'])
+const PROTECTED_DEFAULT_EMAILS = new Set(['itmanager@moresco.local'])
 
 function normalizeValue(value) {
   return String(value || '').trim()
@@ -22,6 +23,10 @@ function normalizeRole(role) {
 
 function normalizeStatus(status) {
   return String(status || '').trim().toLowerCase()
+}
+
+function isProtectedDefaultUser(user) {
+  return PROTECTED_DEFAULT_EMAILS.has(normalizeEmail(user?.email))
 }
 
 async function buildUserPayload(body, { requirePassword }) {
@@ -127,13 +132,17 @@ router.put('/users/:userId', auth, requireItManager, async (req, res) => {
     }
 
     const { rows } = await query(
-      'SELECT id FROM users WHERE id = $1 LIMIT 1',
+      'SELECT id, email FROM users WHERE id = $1 LIMIT 1',
       [req.params.userId],
     )
     const user = rows[0]
 
     if (!user) {
       return res.status(404).json({ message: 'User not found.' })
+    }
+
+    if (isProtectedDefaultUser(user) && payload.accessStatus !== 'active') {
+      return res.status(400).json({ message: 'The default IT Manager account must remain active.' })
     }
 
     const updated = await query(
@@ -196,7 +205,7 @@ router.put('/users/:userId', auth, requireItManager, async (req, res) => {
 router.delete('/users/:userId', auth, requireItManager, async (req, res) => {
   try {
     const { rows } = await query(
-      'SELECT id FROM users WHERE id = $1 LIMIT 1',
+      'SELECT id, email FROM users WHERE id = $1 LIMIT 1',
       [req.params.userId],
     )
     const user = rows[0]
@@ -207,6 +216,10 @@ router.delete('/users/:userId', auth, requireItManager, async (req, res) => {
 
     if (user.id === req.user.id) {
       return res.status(400).json({ message: 'You cannot delete the account you are currently using.' })
+    }
+
+    if (isProtectedDefaultUser(user)) {
+      return res.status(400).json({ message: 'The default IT Manager account cannot be deleted.' })
     }
 
     await query('UPDATE users SET invited_by = NULL WHERE invited_by = $1', [user.id])
