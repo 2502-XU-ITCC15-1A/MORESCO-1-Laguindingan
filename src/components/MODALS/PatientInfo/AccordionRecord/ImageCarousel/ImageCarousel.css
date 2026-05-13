@@ -1,0 +1,104 @@
+.acc-carousel {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.acc-carousel-stage {
+  position: relative;
+}
+
+.acc-carousel-stage:focus-visible {
+  outline: 2px solid #071a78;
+  outline-offset: 2px;
+}
+
+.acc-carousel-count {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  background: rgba(7, 26, 120, 0.82);
+  color: white;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.acc-carousel-delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(180, 52, 52, 0.92);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.acc-carousel-stepper-wrap {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.acc-carousel-stepper {
+  background: #eef2fb !important;
+  padding: 2px 4px !important;
+  min-height: 34px !important;
+}
+
+.acc-carousel-stepper .MuiMobileStepper-dot {
+  background: rgba(7, 26, 120, 0.22);
+}
+
+.acc-carousel-stepper .MuiMobileStepper-dotActive {
+  background: #071a78;
+}
+
+.acc-carousel-stepper .MuiIconButton-root {
+  color: #071a78;
+}
+
+.acc-carousel-pending {
+  font-size: 10px;
+  color: #5b6478;
+  font-weight: 600;
+  text-align: center;
+}
+
+.acc-photo-zoom-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.acc-photo-zoom-nav.left {
+  left: 18px;
+}
+
+.acc-photo-zoom-nav.right {
+  right: 18px;
+}
+
+.acc-photo-zoom-nav:disabled {
+  opacity: 0.35;
+  cursor: default;
+}

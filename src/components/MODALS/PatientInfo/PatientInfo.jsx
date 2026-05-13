@@ -178,7 +178,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     setRecordError('')
   }
 
-  async function handleSaveRecord(recordId, form, photoFile) {
+  async function handleSaveRecord(recordId, form, photoFiles = []) {
     const payload = new FormData()
 
     payload.append('bpVal', form.bpVal || '')
@@ -188,8 +188,18 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     payload.append('complaints', form.complaints || '')
     payload.append('diagnosis', form.diagnosis || '')
     payload.append('remarks', form.remarks || '')
+    payload.append(
+      'retainedImageIds',
+      JSON.stringify(
+        (form.recordImages || [])
+          .filter(image => image.persisted !== false)
+          .map(image => image.id),
+      ),
+    )
 
-    if (photoFile) payload.append('photo', photoFile)
+    for (const photoFile of photoFiles) {
+      payload.append('photos', photoFile)
+    }
 
     const updated = await recordsAPI.update(recordId, payload)
     setRecords(prev =>
@@ -267,6 +277,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     <Modal
       show={show}
       onHide={onClose}
+      centered
       contentClassName="pi-modal-content"
       dialogClassName="pi-modal-dialog"
     >

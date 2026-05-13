@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import morescoLogo from '../../../../assets/logo.png'
+import ImageCarousel from './ImageCarousel/ImageCarousel.jsx'
 import './AccordionRecord.css'
 
 function extractValue(str) {
@@ -45,9 +46,20 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
     : 'Not recorded'
   const allergies = formatJoinedList(healthData?.allergies, 'allergyName')
   const conditions = formatJoinedList(healthData?.chronicConditions, 'conditionName')
-  const recordPhoto = form.photoUrl
-    ? `<div class="photo-card"><img src="${form.photoUrl}" alt="Health record attachment" /></div>`
-    : '<div class="photo-card empty">No attached photo</div>'
+  const recordPhotos = Array.isArray(form.recordImages)
+    ? form.recordImages.map(image => image.photoUrl).filter(Boolean)
+    : []
+  const recordPhoto = recordPhotos.length > 0
+    ? `
+      <div class="photo-grid">
+        ${recordPhotos.map((photoUrl, index) => `
+          <div class="photo-card">
+            <img src="${photoUrl}" alt="Health record attachment ${index + 1}" />
+          </div>
+        `).join('')}
+      </div>
+    `
+    : '<div class="photo-card empty">No attached photos</div>'
 
   const field = value => escapeHtml(value || 'Not recorded')
 
@@ -173,9 +185,14 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
         white-space: pre-wrap;
       }
       .record-layout {
-        display: grid;
-        grid-template-columns: 1fr 150px;
+        display: flex;
+        flex-direction: column;
         gap: 14px;
+      }
+      .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 10px;
       }
       .photo-card {
         min-height: 150px;
@@ -326,8 +343,7 @@ function AccordionRecord({
   const [tab, setTab] = useState('complaints')
   const [editMode, setEditMode] = useState(false)
   const [saving, setSaving] = useState(false)
-  const [photoFile, setPhotoFile] = useState(null)
-  const [zoomPhoto, setZoomPhoto] = useState(false)
+  const [photoFiles, setPhotoFiles] = useState([])
   const photoInputRef = useRef(null)
 
   const [form, setForm] = useState({
@@ -338,27 +354,56 @@ function AccordionRecord({
     complaints: record.complaints || '',
     diagnosis: record.diagnosis || '',
     remarks: record.remarks || '',
-    photoUrl: record.photoUrl || null,
+    recordImages: record.recordImages?.length
+      ? record.recordImages
+      : (record.photoUrls || []).map((photoUrl, index) => ({
+          id: `legacy-${index}`,
+          photoUrl,
+          persisted: true,
+        })),
   })
 
   function update(field, value) {
     setForm(f => ({ ...f, [field]: value }))
   }
 
-  function handlePhotoChange(e) {
-    const file = e.target.files[0]
-    if (!file) return
-    setPhotoFile(file)
-    const reader = new FileReader()
-    reader.onload = ev => update('photoUrl', ev.target.result)
-    reader.readAsDataURL(file)
+  async function handlePhotoChange(e) {
+    const files = Array.from(e.target.files || [])
+    e.target.value = ''
+    if (files.length === 0) return
+
+    setPhotoFiles(current => [...current, ...files])
+    const previews = await Promise.all(files.map(file => new Promise(resolve => {
+      const reader = new FileReader()
+      reader.onload = ev => resolve(ev.target?.result || '')
+      reader.readAsDataURL(file)
+    })))
+
+    setForm(current => ({
+      ...current,
+      recordImages: [
+        ...current.recordImages,
+        ...previews.filter(Boolean).map((photoUrl, index) => ({
+          id: `new-${Date.now()}-${index}`,
+          photoUrl,
+          persisted: false,
+        })),
+      ],
+    }))
+  }
+
+  function handleRemoveImage(imageId) {
+    setForm(current => ({
+      ...current,
+      recordImages: current.recordImages.filter(image => image.id !== imageId),
+    }))
   }
 
   async function handleSave() {
     setSaving(true)
     try {
-      await onSave?.(form, photoFile)
-      setPhotoFile(null)
+      await onSave?.(form, photoFiles)
+      setPhotoFiles([])
       setEditMode(false)
     } finally {
       setSaving(false)
@@ -452,36 +497,16 @@ function AccordionRecord({
           <div className="acc-details-layout">
             <div className="acc-left">
               <div className="acc-photo-wrap">
-                <button
-                  className="acc-photo-area"
-                  onClick={() => form.photoUrl && setZoomPhoto(true)}
-                  title={form.photoUrl ? 'Zoom photo' : 'No photo'}
-                  aria-label={form.photoUrl ? `Zoom record photo from ${record.date}` : `Health record from ${record.date} has no photo`}
-                  type="button"
-                >
-                  {form.photoUrl
-                    ? <img src={form.photoUrl} alt="Record" className="acc-photo-img" />
-                    : (
-                      <div className="acc-photo-placeholder">
-                        <svg width="40" height="40" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <rect x="5" y="12" width="60" height="48" rx="4" stroke="#9ca3af" strokeWidth="3" fill="none"/>
-                          <circle cx="35" cy="32" r="10" stroke="#9ca3af" strokeWidth="3" fill="none"/>
-                          <path d="M5 52 L20 38 L32 50 L47 35 L65 52" stroke="#9ca3af" strokeWidth="3" fill="none"/>
-                          <circle cx="58" cy="58" r="10" fill="#6b7280"/>
-                          <path d="M58 53v10M53 58h10" stroke="white" strokeWidth="2.5" strokeLinecap="round"/>
-                        </svg>
-                        <span>No Photo</span>
-                      </div>
-                    )
-                  }
-                </button>
-                {editMode && (
-                  <button className="acc-change-photo-btn" onClick={() => photoInputRef.current?.click()} type="button">
-                    Change Photo
-                  </button>
-                )}
+                <ImageCarousel
+                  images={form.recordImages}
+                  recordDate={record.date}
+                  editMode={editMode}
+                  onChangePhotoClick={() => photoInputRef.current?.click()}
+                  pendingUploadsCount={photoFiles.length}
+                  onRemoveImage={handleRemoveImage}
+                />
               </div>
-              <input ref={photoInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhotoChange}/>
+              <input ref={photoInputRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handlePhotoChange}/>
 
               <div className="acc-vitals">
                 <div className="acc-vitals-title">Chief Complaints</div>
@@ -560,12 +585,6 @@ function AccordionRecord({
         </div>
       )}
 
-      {zoomPhoto && (
-        <div className="acc-photo-zoom" onClick={() => setZoomPhoto(false)}>
-          <button className="acc-photo-zoom-close" onClick={() => setZoomPhoto(false)} aria-label="Close record photo zoom">x</button>
-          <img src={form.photoUrl} alt="Record" onClick={e => e.stopPropagation()} />
-        </div>
-      )}
     </div>
   )
 }
