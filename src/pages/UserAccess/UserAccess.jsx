@@ -41,10 +41,11 @@ function formatDateTime(value) {
 
 function UserAccess() {
   const currentUser = getCurrentUser()
+  const isAllowed = canManageUserAccess(currentUser.role)
   const [users, setUsers] = useState([])
   const [form, setForm] = useState(createEmptyForm())
   const [editingUserId, setEditingUserId] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(isAllowed)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
@@ -53,8 +54,6 @@ function UserAccess() {
   const [menuUser, setMenuUser] = useState(null)
   const editingProtectedUser = users.find(user => user.id === editingUserId && isProtectedDefaultUser(user))
   const menuUserProtected = isProtectedDefaultUser(menuUser)
-
-  const isAllowed = canManageUserAccess(currentUser.role)
 
   async function loadUsers() {
     if (!isAllowed) return
@@ -72,12 +71,30 @@ function UserAccess() {
   }
 
   useEffect(() => {
-    if (!isAllowed) {
-      setLoading(false)
-      return
+    if (!isAllowed) return
+
+    let active = true
+
+    async function loadInitialUsers() {
+      setLoading(true)
+      setError('')
+      try {
+        const data = await accessAPI.getUsers()
+        if (!active) return
+        setUsers(data)
+      } catch (err) {
+        if (!active) return
+        setError(err.message || 'Unable to load users.')
+      } finally {
+        if (active) setLoading(false)
+      }
     }
 
-    loadUsers()
+    loadInitialUsers()
+
+    return () => {
+      active = false
+    }
   }, [isAllowed])
 
   function handleFieldChange(field, value) {

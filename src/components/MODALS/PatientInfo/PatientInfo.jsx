@@ -493,6 +493,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                   onSave={(form, file) => handleSaveRecord(record.id, form, file)}
                   diseases={diseases}
                   canEdit={canEditPatient}
+                  patient={patient}
+                  healthData={patientHealth}
                 />
               ))}
             </div>
