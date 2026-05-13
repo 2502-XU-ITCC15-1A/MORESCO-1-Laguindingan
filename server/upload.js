@@ -21,7 +21,9 @@ function storageFor(folder) {
         .slice(0, 40) || folder
       const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`
       const filename = `${safeBaseName}-${uniqueSuffix}${ext}`
-      req.savedFileUrl = `/uploads/${req.uploadSubdir}/${filename}`
+      const savedUrl = `/uploads/${req.uploadSubdir}/${filename}`
+      req.savedFileUrl = savedUrl
+      req.savedFileUrls = [...(req.savedFileUrls || []), savedUrl]
       cb(null, filename)
     },
   })
