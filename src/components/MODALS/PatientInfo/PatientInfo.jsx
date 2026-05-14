@@ -219,6 +219,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     payload.append('height', patient.height || '')
     payload.append('weight', patient.weight || '')
     payload.append('sex', patient.sex)
+    payload.append('emergencyContact', patient.emergencyContact || '')
+    payload.append('contactNumber', patient.contactNumber || '')
     payload.append('permAddress', patient.permAddress || '')
     payload.append('presAddress', patient.presAddress || '')
 
@@ -253,6 +255,8 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     payload.append('height', patient.height || '')
     payload.append('weight', patient.weight || '')
     payload.append('sex', patient.sex)
+    payload.append('emergencyContact', patient.emergencyContact || '')
+    payload.append('contactNumber', patient.contactNumber || '')
     payload.append('permAddress', patient.permAddress || '')
     payload.append('presAddress', patient.presAddress || '')
 

@@ -26,6 +26,10 @@ export function canManageDiseases(role) {
   return isHrAdmin(role) || isCompanyNurse(role)
 }
 
+export function canViewDiseaseStats(role) {
+  return isCompanyNurse(role)
+}
+
 export function canManageUserAccess(role) {
   return isItManager(role)
 }

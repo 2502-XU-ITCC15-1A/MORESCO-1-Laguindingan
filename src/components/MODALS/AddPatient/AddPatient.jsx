@@ -14,6 +14,7 @@ const INITIAL_FORM = {
   firstName: '', middleName: '', lastName: '',
   birthDate: '', position: '', status: 'Single',
   height: '', weightValue: '', weightUnit: 'kg', sex: 'Male',
+  emergencyContact: '', contactNumber: '',
   permLine1: '', permLine2: '', permCity: '', permBarangay: '', permProvince: '',
   presLine1: '', presLine2: '', presCity: '', presBarangay: '', presProvince: '',
   photo: null, photoPreview: null,
@@ -98,6 +99,8 @@ function AddPatient({ show, onClose, onAdd }) {
     payload.append('height', form.height)
     payload.append('weight', `${form.weightValue}${form.weightUnit}`)
     payload.append('sex', form.sex)
+    payload.append('emergencyContact', form.emergencyContact)
+    payload.append('contactNumber', form.contactNumber)
     payload.append('permAddress', `${form.permLine1}${form.permLine2 ? ', ' + form.permLine2 : ''}, ${form.permCity}, ${form.permBarangay}, ${form.permProvince}`)
     payload.append('presAddress', `${form.presLine1}${form.presLine2 ? ', ' + form.presLine2 : ''}, ${form.presCity}, ${form.presBarangay}, ${form.presProvince}`)
     payload.append('bloodType', 'Unknown')
@@ -211,6 +214,25 @@ function AddPatient({ show, onClose, onAdd }) {
                   <label className="ap-radio"><input type="radio" value="Male"   checked={form.sex === 'Male'}   onChange={() => update('sex','Male')}/> Male</label>
                   <label className="ap-radio"><input type="radio" value="Female" checked={form.sex === 'Female'} onChange={() => update('sex','Female')}/> Female</label>
                 </div>
+              </div>
+            </div>
+
+            <div className="ap-row ap-two">
+              <div className="ap-field">
+                <label>Emergency Contact</label>
+                <input
+                  value={form.emergencyContact}
+                  onChange={e => update('emergencyContact', e.target.value)}
+                  placeholder="Enter emergency contact name"
+                />
+              </div>
+              <div className="ap-field">
+                <label>Contact Number</label>
+                <input
+                  value={form.contactNumber}
+                  onChange={e => update('contactNumber', e.target.value)}
+                  placeholder="Enter contact number"
+                />
               </div>
             </div>
           </div>

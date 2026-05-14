@@ -75,7 +75,14 @@ function Personal({ patient, age }) {
         <div className="info-grid info-one">
           <InfoBox label="Status" value={patient.status} />
         </div>
+        <div className="info-grid info-two">
+          <InfoBox label="Emergency Contact" value={patient.emergencyContact} />
+          <InfoBox label="Contact Number" value={patient.contactNumber} />
+        </div>
+      </div>
 
+      <div className="personal-section">
+        <h4 className="personal-section-title">Measurements</h4>
         <div className="info-grid info-three">
           <InfoBox label="Height" value={patient.height} />
           <InfoBox label="Weight" value={patient.weight} />
