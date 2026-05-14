@@ -30,6 +30,7 @@
 }
 
 .info-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.info-two   { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .info-one   { grid-template-columns: repeat(1, 1fr); }
 
 .info-box {
@@ -107,4 +108,11 @@
   font-weight: 500;
   line-height: 1.4;
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 640px) {
+  .info-three,
+  .info-two {
+    grid-template-columns: 1fr;
+  }
 }

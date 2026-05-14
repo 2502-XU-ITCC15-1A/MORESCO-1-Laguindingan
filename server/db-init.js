@@ -78,6 +78,8 @@ const statements = [
       sex TEXT NOT NULL,
       height TEXT,
       weight TEXT,
+      emergency_contact TEXT,
+      contact_number TEXT,
       perm_address TEXT,
       pres_address TEXT,
       photo_url TEXT,
@@ -85,6 +87,11 @@ const statements = [
       created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+  `,
+  `
+    ALTER TABLE patients
+    ADD COLUMN IF NOT EXISTS emergency_contact TEXT,
+    ADD COLUMN IF NOT EXISTS contact_number TEXT;
   `,
   `
     CREATE TABLE IF NOT EXISTS health_records (

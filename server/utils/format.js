@@ -55,6 +55,8 @@ export function formatPatient(patient) {
     sex: patient.sex,
     height: patient.height || '',
     weight: patient.weight || '',
+    emergencyContact: patient.emergencyContact || '',
+    contactNumber: patient.contactNumber || '',
     permAddress: patient.permAddress || '',
     presAddress: patient.presAddress || '',
     photoUrl: patient.photoUrl || '',

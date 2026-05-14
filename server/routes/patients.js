@@ -25,6 +25,8 @@ function rowToPatient(row, allergies = [], chronicConditions = []) {
     sex: row.sex,
     height: row.height,
     weight: row.weight,
+    emergencyContact: row.emergency_contact,
+    contactNumber: row.contact_number,
     permAddress: row.perm_address,
     presAddress: row.pres_address,
     photoUrl: row.photo_url,
@@ -78,6 +80,8 @@ function patientData(body, req) {
     sex: body.sex || 'Male',
     height: body.height || '',
     weight: body.weight || '',
+    emergencyContact: body.emergencyContact?.trim() || '',
+    contactNumber: body.contactNumber?.trim() || '',
     permAddress: body.permAddress || '',
     presAddress: body.presAddress || '',
     bloodType: toBloodEnum(body.bloodType),
@@ -178,10 +182,10 @@ router.post('/', auth, requireCompanyNurse, upload.single('photo'), async (req, 
         `
           INSERT INTO patients (
             first_name, middle_name, last_name, id_number, birth_date, position,
-            status, sex, height, weight, perm_address, pres_address, photo_url,
-            blood_type, updated_at
+            status, sex, height, weight, emergency_contact, contact_number,
+            perm_address, pres_address, photo_url, blood_type, updated_at
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, CURRENT_TIMESTAMP)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, CURRENT_TIMESTAMP)
           RETURNING *
         `,
         [
@@ -195,6 +199,8 @@ router.post('/', auth, requireCompanyNurse, upload.single('photo'), async (req, 
           data.sex,
           data.height,
           data.weight,
+          data.emergencyContact,
+          data.contactNumber,
           data.permAddress,
           data.presAddress,
           data.photoUrl || null,
@@ -249,12 +255,14 @@ router.put('/:id', auth, requireCompanyNurse, upload.single('photo'), async (req
             sex = $7,
             height = $8,
             weight = $9,
-            perm_address = $10,
-            pres_address = $11,
-            blood_type = $12,
-            photo_url = COALESCE($13, photo_url),
+            emergency_contact = $10,
+            contact_number = $11,
+            perm_address = $12,
+            pres_address = $13,
+            blood_type = $14,
+            photo_url = COALESCE($15, photo_url),
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = $14
+          WHERE id = $16
           RETURNING *
         `,
         [
@@ -267,6 +275,8 @@ router.put('/:id', auth, requireCompanyNurse, upload.single('photo'), async (req
           data.sex,
           data.height,
           data.weight,
+          data.emergencyContact,
+          data.contactNumber,
           data.permAddress,
           data.presAddress,
           data.bloodType,

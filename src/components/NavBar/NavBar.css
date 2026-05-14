@@ -350,8 +350,28 @@
   color: #6b7280;
 }
 
-.drawer-stats-head select {
-  max-width: 132px;
+.drawer-stats-filters {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.drawer-stats-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.drawer-stats-filters span {
+  font-size: 11px;
+  font-weight: 700;
+  color: #5b6b85;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.drawer-stats-filters input {
   border: 1px solid #bfdbfe;
   border-radius: 7px;
   padding: 7px 8px;
@@ -486,6 +506,15 @@
 
   .nav-profile-menu-card {
     width: min(300px, calc(100vw - 28px));
+  }
+
+  .drawer-stats-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .drawer-stats-filters {
+    grid-template-columns: 1fr;
   }
 }
 

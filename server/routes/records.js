@@ -1,7 +1,7 @@
 import express from 'express'
 import { query } from '../db.js'
 import auth from '../middleware/auth.js'
-import { requireCompanyNurse } from '../middleware/roles.js'
+import { requireCompanyNurse, requireOnlyCompanyNurse } from '../middleware/roles.js'
 import { imageUpload } from '../upload.js'
 import { formatRecord } from '../utils/format.js'
 
@@ -134,11 +134,26 @@ async function syncRecordImages(recordId, retainedImageIds, uploadedPhotos) {
   return finalImages
 }
 
-router.get('/stats/diseases', auth, async (req, res) => {
+router.get('/stats/diseases', auth, requireOnlyCompanyNurse, async (req, res) => {
   try {
-    const month = req.query.month ? Number(req.query.month) : null
-    const year = req.query.year ? Number(req.query.year) : null
-    const params = [year, month]
+    const startMonth = req.query.startMonth ? new Date(`${req.query.startMonth}-01T00:00:00`) : null
+    const endMonth = req.query.endMonth ? new Date(`${req.query.endMonth}-01T00:00:00`) : null
+
+    if ((startMonth && Number.isNaN(startMonth.getTime())) || (endMonth && Number.isNaN(endMonth.getTime()))) {
+      return res.status(400).json({ message: 'Invalid month range.' })
+    }
+
+    if (startMonth && endMonth && startMonth > endMonth) {
+      return res.status(400).json({ message: 'Start month cannot be later than end month.' })
+    }
+
+    const rangeStart = startMonth
+      ? new Date(startMonth.getFullYear(), startMonth.getMonth(), 1)
+      : null
+    const rangeEnd = endMonth
+      ? new Date(endMonth.getFullYear(), endMonth.getMonth() + 1, 1)
+      : null
+    const params = [rangeStart, rangeEnd]
 
     const totalResult = await query(
       `
@@ -146,8 +161,8 @@ router.get('/stats/diseases', auth, async (req, res) => {
         FROM health_records
         WHERE diagnosis IS NOT NULL
           AND BTRIM(diagnosis) <> ''
-          AND ($1::int IS NULL OR EXTRACT(YEAR FROM record_date)::int = $1)
-          AND ($2::int IS NULL OR EXTRACT(MONTH FROM record_date)::int = $2)
+          AND ($1::timestamp IS NULL OR record_date >= $1)
+          AND ($2::timestamp IS NULL OR record_date < $2)
       `,
       params,
     )
@@ -158,8 +173,8 @@ router.get('/stats/diseases', auth, async (req, res) => {
         FROM health_records
         WHERE diagnosis IS NOT NULL
           AND BTRIM(diagnosis) <> ''
-          AND ($1::int IS NULL OR EXTRACT(YEAR FROM record_date)::int = $1)
-          AND ($2::int IS NULL OR EXTRACT(MONTH FROM record_date)::int = $2)
+          AND ($1::timestamp IS NULL OR record_date >= $1)
+          AND ($2::timestamp IS NULL OR record_date < $2)
         GROUP BY BTRIM(diagnosis)
         ORDER BY count DESC, name ASC
         LIMIT 10
