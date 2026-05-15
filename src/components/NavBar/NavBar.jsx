@@ -3,25 +3,9 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import { recordsAPI } from '../../api/client.js'
-import { canManageUserAccess, roleLabel } from '../../utils/roles.js'
+import { canAccessPatients, canManageUserAccess, canViewDiseaseStats, roleLabel } from '../../utils/roles.js'
 import morescoLogo from '../../assets/logo.png'
 import './NavBar.css'
-
-const MONTHS = [
-  { value: '', label: 'All months' },
-  { value: '1', label: 'January' },
-  { value: '2', label: 'February' },
-  { value: '3', label: 'March' },
-  { value: '4', label: 'April' },
-  { value: '5', label: 'May' },
-  { value: '6', label: 'June' },
-  { value: '7', label: 'July' },
-  { value: '8', label: 'August' },
-  { value: '9', label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' },
-]
 
 function getCurrentUser() {
   try {
@@ -34,7 +18,8 @@ function getCurrentUser() {
 function NavBar({ showDrawer = true }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [profileMenuOpen, setProfileMenuOpen] = useState(false)
-  const [statsMonth, setStatsMonth] = useState('')
+  const [statsStartMonth, setStatsStartMonth] = useState('')
+  const [statsEndMonth, setStatsEndMonth] = useState('')
   const [stats, setStats] = useState({ total: 0, stats: [] })
   const [statsError, setStatsError] = useState('')
   const profileMenuRef = useRef(null)
@@ -43,7 +28,9 @@ function NavBar({ showDrawer = true }) {
   const user = getCurrentUser()
   const displayName = 'Moresco-1'
   const displayRole = roleLabel(user.role)
+  const hasPatientsAccess = canAccessPatients(user.role)
   const hasUserAccessTab = canManageUserAccess(user.role)
+  const canSeeDiseaseStats = canViewDiseaseStats(user.role)
   const onPatientsPage = location.pathname === '/patients'
   const onUserAccessPage = location.pathname === '/user-access'
   const initials = displayName.split(/[.\s]+/).filter(Boolean).slice(0, 2).map(part => part[0]).join('').toUpperCase() || 'M'
@@ -55,7 +42,10 @@ function NavBar({ showDrawer = true }) {
     async function loadStats() {
       setStatsError('')
       try {
-        const data = await recordsAPI.getDiseaseStats({ month: statsMonth })
+        const filters = {}
+        if (statsStartMonth) filters.startMonth = statsStartMonth
+        if (statsEndMonth) filters.endMonth = statsEndMonth
+        const data = await recordsAPI.getDiseaseStats(filters)
         if (active) setStats(data)
       } catch (err) {
         if (active) setStatsError(err.message || 'Unable to load disease stats.')
@@ -64,7 +54,7 @@ function NavBar({ showDrawer = true }) {
 
     loadStats()
     return () => { active = false }
-  }, [drawerOpen, statsMonth])
+  }, [drawerOpen, statsStartMonth, statsEndMonth])
 
   useEffect(() => {
     if (!profileMenuOpen) return
@@ -100,12 +90,12 @@ function NavBar({ showDrawer = true }) {
         </div>
 
         <div className="nav-center">
-          {hasUserAccessTab ? (
+          {hasPatientsAccess && hasUserAccessTab ? (
             <div className="nav-tab-group" aria-label="System pages">
               <button
                 className={`nav-page-badge ${onPatientsPage ? 'active' : ''}`}
-                onClick={() => (onPatientsPage && showDrawer ? setDrawerOpen(true) : navigate('/patients'))}
-                title={onPatientsPage && showDrawer ? 'Open disease statistics drawer' : 'Go to patients page'}
+                onClick={() => navigate('/patients')}
+                title="Go to patients page"
                 type="button"
               >
                 Patients
@@ -119,14 +109,32 @@ function NavBar({ showDrawer = true }) {
                 User Access
               </button>
             </div>
+          ) : hasPatientsAccess ? (
+            <button
+              className={`nav-page-badge ${onPatientsPage ? 'active' : ''}`}
+              onClick={() => navigate('/patients')}
+              title="Go to patients page"
+              type="button"
+            >
+              Patients
+            </button>
+          ) : hasUserAccessTab ? (
+            <button
+              className={`nav-page-badge ${onUserAccessPage ? 'active' : ''}`}
+              onClick={() => navigate('/user-access')}
+              title="Open user access management"
+              type="button"
+            >
+              User Access
+            </button>
           ) : (
             <button
               className="nav-page-badge"
-              onClick={() => (showDrawer ? setDrawerOpen(true) : navigate('/patients'))}
-              title={showDrawer ? 'Open disease statistics drawer' : 'Go to patients page'}
+              onClick={() => navigate('/patients')}
+              title="Go to patients page"
               type="button"
             >
-              {showDrawer ? 'Patients' : 'Back to Patients'}
+              Back
             </button>
           )}
         </div>
@@ -156,6 +164,19 @@ function NavBar({ showDrawer = true }) {
 
                 <div className="nav-profile-menu-divider" />
 
+                {showDrawer && canSeeDiseaseStats && (
+                  <button
+                    className="nav-profile-menu-item"
+                    onClick={() => {
+                      setDrawerOpen(true)
+                      setProfileMenuOpen(false)
+                    }}
+                    type="button"
+                  >
+                    Common Disease Stats
+                  </button>
+                )}
+
                 <button className="nav-profile-menu-item logout" onClick={handleLogout} type="button">
                   Log out
                 </button>
@@ -165,7 +186,7 @@ function NavBar({ showDrawer = true }) {
         </div>
       </nav>
 
-      {showDrawer && (
+      {showDrawer && canSeeDiseaseStats && (
         <Drawer
           anchor="right"
           open={drawerOpen}
@@ -212,11 +233,25 @@ function NavBar({ showDrawer = true }) {
                   <h2>Common Diseases</h2>
                   <p>{stats.total} record{stats.total === 1 ? '' : 's'} counted</p>
                 </div>
-                <select value={statsMonth} onChange={e => setStatsMonth(e.target.value)}>
-                  {MONTHS.map(month => (
-                    <option key={month.value || 'all'} value={month.value}>{month.label}</option>
-                  ))}
-                </select>
+              </div>
+
+              <div className="drawer-stats-filters">
+                <label>
+                  <span>Start month</span>
+                  <input
+                    type="month"
+                    value={statsStartMonth}
+                    onChange={e => setStatsStartMonth(e.target.value)}
+                  />
+                </label>
+                <label>
+                  <span>End month</span>
+                  <input
+                    type="month"
+                    value={statsEndMonth}
+                    onChange={e => setStatsEndMonth(e.target.value)}
+                  />
+                </label>
               </div>
 
               <div className="drawer-stats-list">

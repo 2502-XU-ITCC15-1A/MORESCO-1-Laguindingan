@@ -11,10 +11,23 @@ function DiseaseManager({ show, onClose }) {
 
   useEffect(() => {
     if (!show) return
-    setError('')
+
+    let active = true
+
     diseasesAPI.getAll()
-      .then(setDiseases)
-      .catch(err => setError(err.message || 'Unable to load diseases.'))
+      .then(data => {
+        if (!active) return
+        setDiseases(data)
+        setError('')
+      })
+      .catch(err => {
+        if (!active) return
+        setError(err.message || 'Unable to load diseases.')
+      })
+
+    return () => {
+      active = false
+    }
   }, [show])
 
   async function handleAdd(e) {

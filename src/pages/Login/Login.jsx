@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authAPI } from '../../api/client.js'
+import { getDefaultRoute } from '../../utils/roles.js'
 import moresco1Logo from '../../assets/logo.png'
 import './Login.css'
 
@@ -25,7 +26,7 @@ function Login() {
       const { token, user } = await authAPI.login(identifier.trim(), password)
       localStorage.setItem('token', token)
       localStorage.setItem('user', JSON.stringify(user))
-      navigate('/patients')
+      navigate(getDefaultRoute(user.role))
     } catch (err) {
       setError(err.message || 'Invalid username or password.')
     } finally {

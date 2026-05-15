@@ -78,6 +78,8 @@ const statements = [
       sex TEXT NOT NULL,
       height TEXT,
       weight TEXT,
+      emergency_contact TEXT,
+      contact_number TEXT,
       perm_address TEXT,
       pres_address TEXT,
       photo_url TEXT,
@@ -85,6 +87,11 @@ const statements = [
       created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+  `,
+  `
+    ALTER TABLE patients
+    ADD COLUMN IF NOT EXISTS emergency_contact TEXT,
+    ADD COLUMN IF NOT EXISTS contact_number TEXT;
   `,
   `
     CREATE TABLE IF NOT EXISTS health_records (
@@ -102,6 +109,28 @@ const statements = [
       created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+  `,
+  `
+    CREATE TABLE IF NOT EXISTS health_record_images (
+      id SERIAL PRIMARY KEY,
+      record_id INTEGER NOT NULL REFERENCES health_records(id) ON DELETE CASCADE,
+      photo_url TEXT NOT NULL,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `,
+  `
+    INSERT INTO health_record_images (record_id, photo_url, sort_order)
+    SELECT hr.id, hr.photo_url, 0
+    FROM health_records hr
+    WHERE hr.photo_url IS NOT NULL
+      AND BTRIM(hr.photo_url) <> ''
+      AND NOT EXISTS (
+        SELECT 1
+        FROM health_record_images hri
+        WHERE hri.record_id = hr.id
+          AND hri.photo_url = hr.photo_url
+      );
   `,
   `
     CREATE TABLE IF NOT EXISTS allergies (

@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import NavBar from '../../components/NavBar/NavBar.jsx'
-import { roleLabel } from '../../utils/roles.js'
+import { getDefaultRoute, roleLabel } from '../../utils/roles.js'
 import './Profile.css'
 
 function getCurrentUser() {
@@ -43,8 +43,8 @@ function Profile() {
           </div>
 
           <div className="profile-actions-page">
-            <button type="button" className="profile-primary-page" onClick={() => navigate('/patients')}>
-              Back to Patients
+            <button type="button" className="profile-primary-page" onClick={() => navigate(getDefaultRoute(user.role))}>
+              {getDefaultRoute(user.role) === '/user-access' ? 'Back to User Access' : 'Back to Patients'}
             </button>
             <button type="button" className="profile-danger-page" onClick={handleLogout}>
               Logout

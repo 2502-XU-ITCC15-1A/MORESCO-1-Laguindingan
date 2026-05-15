@@ -14,16 +14,30 @@ export function isItManager(role) {
   return normalizeRole(role) === 'it manager'
 }
 
+export function canAccessPatients(role) {
+  return isHrAdmin(role) || isCompanyNurse(role)
+}
+
 export function canManagePatients(role) {
-  return isCompanyNurse(role) || isItManager(role)
+  return isCompanyNurse(role)
 }
 
 export function canManageDiseases(role) {
-  return isHrAdmin(role) || isCompanyNurse(role) || isItManager(role)
+  return isHrAdmin(role) || isCompanyNurse(role)
+}
+
+export function canViewDiseaseStats(role) {
+  return isCompanyNurse(role)
 }
 
 export function canManageUserAccess(role) {
   return isItManager(role)
+}
+
+export function getDefaultRoute(role) {
+  if (canManageUserAccess(role)) return '/user-access'
+  if (canAccessPatients(role)) return '/patients'
+  return '/login'
 }
 
 export function roleLabel(role) {

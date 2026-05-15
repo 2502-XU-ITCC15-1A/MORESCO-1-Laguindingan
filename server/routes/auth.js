@@ -3,10 +3,24 @@ import express from 'express'
 import jwt from 'jsonwebtoken'
 import { query } from '../db.js'
 import auth from '../middleware/auth.js'
+import { createRateLimiter } from '../middleware/rateLimit.js'
 
 const router = express.Router()
+const loginRateLimiter = createRateLimiter({
+  windowMs: Number(process.env.LOGIN_RATE_LIMIT_WINDOW_MS || 15 * 60_000),
+  maxRequests: Number(process.env.LOGIN_RATE_LIMIT_MAX || 8),
+  message: 'Too many login attempts. Please wait a few minutes before trying again.',
+  keyGenerator: req => {
+    const forwardedFor = typeof req.headers['x-forwarded-for'] === 'string'
+      ? req.headers['x-forwarded-for'].split(',')[0].trim()
+      : ''
+    const ip = forwardedFor || req.ip || req.socket?.remoteAddress || 'unknown'
+    const identifier = String(req.body?.identifier || req.body?.username || '').trim().toLowerCase()
+    return `${ip}:${identifier || 'anonymous'}`
+  },
+})
 
-router.post('/login', async (req, res) => {
+router.post('/login', loginRateLimiter, async (req, res) => {
   try {
     const { username, identifier, password } = req.body
     const loginValue = String(identifier || username || '').trim()

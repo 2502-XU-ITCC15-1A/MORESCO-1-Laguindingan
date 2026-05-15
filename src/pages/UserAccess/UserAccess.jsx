@@ -9,6 +9,7 @@ import './UserAccess.css'
 
 const ROLE_OPTIONS = ['HR Admin', 'Company Nurse', 'IT Manager']
 const STATUS_OPTIONS = ['active', 'inactive']
+const PROTECTED_DEFAULT_EMAILS = new Set(['itmanager@moresco.local'])
 
 function getCurrentUser() {
   try {
@@ -28,6 +29,10 @@ function createEmptyForm() {
   }
 }
 
+function isProtectedDefaultUser(user) {
+  return PROTECTED_DEFAULT_EMAILS.has(String(user?.email || '').trim().toLowerCase())
+}
+
 function formatDateTime(value) {
   if (!value) return 'Not yet'
   const date = new Date(value)
@@ -36,18 +41,19 @@ function formatDateTime(value) {
 
 function UserAccess() {
   const currentUser = getCurrentUser()
+  const isAllowed = canManageUserAccess(currentUser.role)
   const [users, setUsers] = useState([])
   const [form, setForm] = useState(createEmptyForm())
   const [editingUserId, setEditingUserId] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(isAllowed)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState('')
   const [error, setError] = useState('')
   const [workingUserId, setWorkingUserId] = useState(null)
   const [menuAnchorEl, setMenuAnchorEl] = useState(null)
   const [menuUser, setMenuUser] = useState(null)
-
-  const isAllowed = canManageUserAccess(currentUser.role)
+  const editingProtectedUser = users.find(user => user.id === editingUserId && isProtectedDefaultUser(user))
+  const menuUserProtected = isProtectedDefaultUser(menuUser)
 
   async function loadUsers() {
     if (!isAllowed) return
@@ -65,12 +71,30 @@ function UserAccess() {
   }
 
   useEffect(() => {
-    if (!isAllowed) {
-      setLoading(false)
-      return
+    if (!isAllowed) return
+
+    let active = true
+
+    async function loadInitialUsers() {
+      setLoading(true)
+      setError('')
+      try {
+        const data = await accessAPI.getUsers()
+        if (!active) return
+        setUsers(data)
+      } catch (err) {
+        if (!active) return
+        setError(err.message || 'Unable to load users.')
+      } finally {
+        if (active) setLoading(false)
+      }
     }
 
-    loadUsers()
+    loadInitialUsers()
+
+    return () => {
+      active = false
+    }
   }, [isAllowed])
 
   function handleFieldChange(field, value) {
@@ -113,6 +137,11 @@ function UserAccess() {
     const selectedUser = menuUser
     closeMenu()
 
+    if (isProtectedDefaultUser(selectedUser)) {
+      setError('The default IT Manager account cannot be deleted.')
+      return
+    }
+
     if (!window.confirm(`Delete the account for ${selectedUser.username}?`)) {
       return
     }
@@ -137,6 +166,11 @@ function UserAccess() {
     if (!menuUser) return
     const selectedUser = menuUser
     closeMenu()
+
+    if (isProtectedDefaultUser(selectedUser)) {
+      setError('The default IT Manager account must remain active.')
+      return
+    }
 
     const nextStatus = selectedUser.accessStatus === 'active' ? 'inactive' : 'active'
     setWorkingUserId(selectedUser.id)
@@ -277,8 +311,12 @@ function UserAccess() {
 
             <label className="user-access-field">
               <span>Status</span>
-              <select value={form.accessStatus} onChange={event => handleFieldChange('accessStatus', event.target.value)}>
-                {STATUS_OPTIONS.map(option => (
+              <select
+                value={form.accessStatus}
+                onChange={event => handleFieldChange('accessStatus', event.target.value)}
+                disabled={Boolean(editingProtectedUser)}
+              >
+                {(editingProtectedUser ? ['active'] : STATUS_OPTIONS).map(option => (
                   <option key={option} value={option}>
                     {option === 'active' ? 'Active' : 'Inactive'}
                   </option>
@@ -348,16 +386,20 @@ function UserAccess() {
 
         <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={closeMenu}>
           <MenuItem onClick={handleEditUser}>Edit account</MenuItem>
-          <MenuItem onClick={handleToggleStatus}>
-            {menuUser?.accessStatus === 'active' ? 'Set inactive' : 'Set active'}
-          </MenuItem>
-          <MenuItem
-            onClick={handleDeleteUser}
-            sx={{ color: '#b23434' }}
-            disabled={menuUser?.id === currentUser.id}
-          >
-            Delete account
-          </MenuItem>
+          {!menuUserProtected && (
+            <MenuItem onClick={handleToggleStatus}>
+              {menuUser?.accessStatus === 'active' ? 'Set inactive' : 'Set active'}
+            </MenuItem>
+          )}
+          {!menuUserProtected && (
+            <MenuItem
+              onClick={handleDeleteUser}
+              sx={{ color: '#b23434' }}
+              disabled={menuUser?.id === currentUser.id}
+            >
+              Delete account
+            </MenuItem>
+          )}
         </Menu>
       </main>
     </div>

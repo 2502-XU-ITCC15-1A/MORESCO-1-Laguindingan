@@ -55,6 +55,8 @@ export function formatPatient(patient) {
     sex: patient.sex,
     height: patient.height || '',
     weight: patient.weight || '',
+    emergencyContact: patient.emergencyContact || '',
+    contactNumber: patient.contactNumber || '',
     permAddress: patient.permAddress || '',
     presAddress: patient.presAddress || '',
     photoUrl: patient.photoUrl || '',
@@ -66,6 +68,7 @@ export function formatPatient(patient) {
 }
 
 export function formatRecord(record) {
+  const recordImages = record.recordImages || []
   return {
     id: record.id,
     patientId: record.patientId,
@@ -79,5 +82,7 @@ export function formatRecord(record) {
     diagnosis: record.diagnosis || '',
     remarks: record.remarks || '',
     photoUrl: record.photoUrl || '',
+    photoUrls: record.photoUrls || (record.photoUrl ? [record.photoUrl] : []),
+    recordImages,
   }
 }
