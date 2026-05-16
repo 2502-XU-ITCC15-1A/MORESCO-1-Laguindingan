@@ -208,6 +208,21 @@
   cursor: pointer;
   font-family: inherit;
   transition: background 0.2s, color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-profile-menu-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.nav-profile-menu-item.disease-stats-item {
+  padding-left: 12px;
+  word-spacing: 1px;
 }
 
 .nav-profile-menu-item.logout {
