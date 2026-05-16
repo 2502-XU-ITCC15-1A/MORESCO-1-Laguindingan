@@ -48,7 +48,16 @@ function sortRecordsByDateDesc(items) {
   })
 }
 
-function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient = false }) {
+function PatientInfo({
+  show,
+  onClose,
+  patient,
+  onPatientUpdated,
+  canEditPersonalInfo = false,
+  canEditMeasurements = false,
+  canEditHealthInfo = false,
+  canEditRecords = false,
+}) {
   const [activeTab, setActiveTab] = useState('personal')
   const [filterMonth, setFilterMonth] = useState('')
   const [filterYear, setFilterYear] = useState('')
@@ -239,10 +248,41 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
     onPatientUpdated?.(updated)
   }
 
+  async function handlePersonalUpdate(data) {
+    const payload = new FormData()
+
+    payload.append('firstName', data.firstName)
+    payload.append('middleName', data.middleName || '')
+    payload.append('lastName', data.lastName)
+    payload.append('birthDate', data.birthDate)
+    payload.append('position', data.position || '')
+    payload.append('status', data.status)
+    payload.append('height', data.height || '')
+    payload.append('weight', data.weight || '')
+    payload.append('sex', data.sex)
+    payload.append('emergencyContact', data.emergencyContact || '')
+    payload.append('contactNumber', data.contactNumber || '')
+    payload.append('permAddress', data.permAddress || '')
+    payload.append('presAddress', data.presAddress || '')
+    payload.append('bloodType', patientHealth.bloodType || 'Unknown')
+    payload.append('allergies', JSON.stringify(patientHealth.allergies || []))
+    payload.append('chronicConditions', JSON.stringify(patientHealth.chronicConditions || []))
+
+    const updated = await patientsAPI.update(patient.id, payload)
+
+    setPatientHealth({
+      allergies: updated.allergies || [],
+      chronicConditions: updated.chronicConditions || [],
+      bloodType: updated.bloodType || 'Unknown',
+    })
+
+    onPatientUpdated?.(updated)
+  }
+
   async function handlePatientPhotoChange(e) {
     const file = e.target.files[0]
     e.target.value = ''
-    if (!file || !canEditPatient) return
+    if (!file || !canEditPersonalInfo) return
 
     const payload = new FormData()
 
@@ -338,7 +378,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                 <p>{patient.position}</p>
                 <span>{patient.idNumber}</span>
 
-                {canEditPatient && (
+                {canEditPersonalInfo && (
                   <>
                   <button
                     className="pi-change-photo-btn"
@@ -378,12 +418,20 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
             </div>
 
             <div className="pi-tab-content">
-              {activeTab === 'personal' && <Personal patient={patient} age={age} />}
+              {activeTab === 'personal' && (
+                <Personal
+                  patient={patient}
+                  age={age}
+                  onUpdate={handlePersonalUpdate}
+                  canEdit={canEditPersonalInfo}
+                  canEditMeasurements={canEditMeasurements}
+                />
+              )}
               {activeTab === 'health' && (
                 <Health
                   healthData={patientHealth}
                   onUpdate={handleHealthUpdate}
-                  canEdit={canEditPatient}
+                  canEdit={canEditHealthInfo}
                 />
               )}
             </div>
@@ -421,7 +469,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                 </select>
               </div>
 
-              {canEditPatient && (
+              {canEditRecords && (
                 <button
                   className="pi-new-btn"
                   onClick={() => {
@@ -435,7 +483,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
               )}
             </div>
 
-            {canEditPatient && showCreateRecordForm && (
+            {canEditRecords && showCreateRecordForm && (
               <div className="pi-record-create-bar">
                 <label className="pi-record-create-label" htmlFor="pi-new-record-date">
                   Record date
@@ -507,7 +555,7 @@ function PatientInfo({ show, onClose, patient, onPatientUpdated, canEditPatient 
                   onDelete={() => handleDeleteRecord(record.id)}
                   onSave={(form, file) => handleSaveRecord(record.id, form, file)}
                   diseases={diseases}
-                  canEdit={canEditPatient}
+                  canEdit={canEditRecords}
                   patient={patient}
                   healthData={patientHealth}
                 />
