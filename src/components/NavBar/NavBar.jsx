@@ -5,6 +5,8 @@ import IconButton from '@mui/material/IconButton'
 import { recordsAPI } from '../../api/client.js'
 import { canAccessPatients, canManageUserAccess, canViewDiseaseStats, roleLabel } from '../../utils/roles.js'
 import morescoLogo from '../../assets/logo.png'
+import statsIcon from '../../assets/statss.png'
+import logoutIcon from '../../assets/logout.png'
 import './NavBar.css'
 
 function getCurrentUser() {
@@ -166,19 +168,21 @@ function NavBar({ showDrawer = true }) {
 
                 {showDrawer && canSeeDiseaseStats && (
                   <button
-                    className="nav-profile-menu-item"
+                    className="nav-profile-menu-item disease-stats-item"
                     onClick={() => {
                       setDrawerOpen(true)
                       setProfileMenuOpen(false)
                     }}
                     type="button"
                   >
-                    Common Disease Stats
+                    <img className="nav-profile-menu-icon" src={statsIcon} alt="" aria-hidden="true" />
+                    <span>Common Disease Stats</span>
                   </button>
                 )}
 
                 <button className="nav-profile-menu-item logout" onClick={handleLogout} type="button">
-                  Log out
+                  <img className="nav-profile-menu-icon" src={logoutIcon} alt="" aria-hidden="true" />
+                  <span>Log out</span>
                 </button>
               </div>
             </div>
