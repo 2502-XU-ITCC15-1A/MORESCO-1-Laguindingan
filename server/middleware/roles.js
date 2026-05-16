@@ -18,6 +18,10 @@ export function canManageClinicalData(req) {
   return isCompanyNurse(req) || isItManager(req)
 }
 
+export function canEditPatientPersonal(req) {
+  return isHrAdmin(req) || isCompanyNurse(req)
+}
+
 export function requireHrAdmin(req, res, next) {
   if (!isHrAdmin(req)) {
     return res.status(403).json({ message: 'HR Admin access required' })
@@ -28,6 +32,13 @@ export function requireHrAdmin(req, res, next) {
 export function requireCompanyNurse(req, res, next) {
   if (!canManageClinicalData(req)) {
     return res.status(403).json({ message: 'Company Nurse or IT Manager access required' })
+  }
+  next()
+}
+
+export function requirePatientPersonalEditor(req, res, next) {
+  if (!canEditPatientPersonal(req)) {
+    return res.status(403).json({ message: 'Personal information access required' })
   }
   next()
 }

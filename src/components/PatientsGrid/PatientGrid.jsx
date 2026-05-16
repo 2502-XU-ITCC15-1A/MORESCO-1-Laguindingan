@@ -3,7 +3,14 @@ import Patient from '../Patient/Patient.jsx'
 import AddPatient from '../MODALS/AddPatient/AddPatient.jsx'
 import DiseaseManager from '../MODALS/DiseaseManager/DiseaseManager.jsx'
 import { patientsAPI } from '../../api/client.js'
-import { canManageDiseases, canManagePatients } from '../../utils/roles.js'
+import {
+  canEditPatientHealth,
+  canEditPatientMeasurements,
+  canEditPatientPersonal,
+  canManageDiseases,
+  canManagePatientRecords,
+  canManagePatients,
+} from '../../utils/roles.js'
 import './PatientGrid.css'
 
 const PATIENTS_PER_PAGE = 12
@@ -21,6 +28,10 @@ function PatientGrid() {
   const [reloadKey, setReloadKey] = useState(0)
   const user = JSON.parse(localStorage.getItem('user') || '{}')
   const canEditPatients = canManagePatients(user.role)
+  const canEditPersonalInfo = canEditPatientPersonal(user.role)
+  const canEditMeasurements = canEditPatientMeasurements(user.role)
+  const canEditHealthInfo = canEditPatientHealth(user.role)
+  const canEditRecords = canManagePatientRecords(user.role)
   const canOpenDiseaseManager = canManageDiseases(user.role)
 
   useEffect(() => {
@@ -122,7 +133,10 @@ function PatientGrid() {
                 onPatientUpdated={handlePatientUpdated}
                 onDelete={canEditPatients ? handleDeletePatient : undefined}
                 canDelete={canEditPatients}
-                canEditPatient={canEditPatients}
+                canEditPersonalInfo={canEditPersonalInfo}
+                canEditMeasurements={canEditMeasurements}
+                canEditHealthInfo={canEditHealthInfo}
+                canEditRecords={canEditRecords}
               />
             ))
           }

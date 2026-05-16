@@ -22,6 +22,22 @@ export function canManagePatients(role) {
   return isCompanyNurse(role)
 }
 
+export function canEditPatientPersonal(role) {
+  return isHrAdmin(role) || isCompanyNurse(role)
+}
+
+export function canEditPatientMeasurements(role) {
+  return isCompanyNurse(role)
+}
+
+export function canEditPatientHealth(role) {
+  return isCompanyNurse(role)
+}
+
+export function canManagePatientRecords(role) {
+  return isCompanyNurse(role)
+}
+
 export function canManageDiseases(role) {
   return isHrAdmin(role) || isCompanyNurse(role)
 }

@@ -1,7 +1,11 @@
 import express from 'express'
 import { query, withTransaction } from '../db.js'
 import auth from '../middleware/auth.js'
-import { requireCompanyNurse } from '../middleware/roles.js'
+import {
+  isCompanyNurse,
+  requireCompanyNurse,
+  requirePatientPersonalEditor,
+} from '../middleware/roles.js'
 import { imageUpload } from '../upload.js'
 import { formatPatient, parseJsonArray, toBloodEnum } from '../utils/format.js'
 
@@ -86,6 +90,16 @@ function patientData(body, req) {
     presAddress: body.presAddress || '',
     bloodType: toBloodEnum(body.bloodType),
     ...(fileUrl(req) ? { photoUrl: fileUrl(req) } : {}),
+  }
+}
+
+function mergePatientDataForRole(existingRow, body, req) {
+  const base = patientData(body, req)
+  if (isCompanyNurse(req)) return base
+
+  return {
+    ...base,
+    bloodType: existingRow.blood_type,
   }
 }
 
@@ -234,14 +248,19 @@ router.post('/', auth, requireCompanyNurse, upload.single('photo'), async (req, 
   }
 })
 
-router.put('/:id', auth, requireCompanyNurse, upload.single('photo'), async (req, res) => {
+router.put('/:id', auth, requirePatientPersonalEditor, upload.single('photo'), async (req, res) => {
   try {
     const id = Number(req.params.id)
     const allergies = parseJsonArray(req.body.allergies)
     const chronicConditions = parseJsonArray(req.body.chronicConditions)
 
     const patient = await withTransaction(async client => {
-      const data = patientData(req.body, req)
+      const existingResult = await client.query('SELECT * FROM patients WHERE id = $1 LIMIT 1', [id])
+      const existingRow = existingResult.rows[0]
+      if (!existingRow) throw new Error('Patient not found')
+
+      const isFullEditor = isCompanyNurse(req)
+      const mergedData = mergePatientDataForRole(existingRow, req.body, req)
       const updated = await client.query(
         `
           UPDATE patients
@@ -266,21 +285,21 @@ router.put('/:id', auth, requireCompanyNurse, upload.single('photo'), async (req
           RETURNING *
         `,
         [
-          data.firstName,
-          data.middleName,
-          data.lastName,
-          data.birthDate,
-          data.position,
-          data.status,
-          data.sex,
-          data.height,
-          data.weight,
-          data.emergencyContact,
-          data.contactNumber,
-          data.permAddress,
-          data.presAddress,
-          data.bloodType,
-          data.photoUrl || null,
+          mergedData.firstName,
+          mergedData.middleName,
+          mergedData.lastName,
+          mergedData.birthDate,
+          mergedData.position,
+          mergedData.status,
+          mergedData.sex,
+          mergedData.height,
+          mergedData.weight,
+          mergedData.emergencyContact,
+          mergedData.contactNumber,
+          mergedData.permAddress,
+          mergedData.presAddress,
+          mergedData.bloodType,
+          mergedData.photoUrl || null,
           id,
         ],
       )
@@ -288,24 +307,33 @@ router.put('/:id', auth, requireCompanyNurse, upload.single('photo'), async (req
       const row = updated.rows[0]
       if (!row) throw new Error('Patient not found')
 
-      await client.query('DELETE FROM allergies WHERE patient_id = $1', [id])
-      await client.query('DELETE FROM chronic_conditions WHERE patient_id = $1', [id])
+      let finalAllergies = allergies
+      let finalChronicConditions = chronicConditions
 
-      for (const allergyName of allergies) {
-        await client.query(
-          'INSERT INTO allergies (patient_id, allergy_name) VALUES ($1, $2)',
-          [id, allergyName],
-        )
+      if (isFullEditor) {
+        await client.query('DELETE FROM allergies WHERE patient_id = $1', [id])
+        await client.query('DELETE FROM chronic_conditions WHERE patient_id = $1', [id])
+
+        for (const allergyName of allergies) {
+          await client.query(
+            'INSERT INTO allergies (patient_id, allergy_name) VALUES ($1, $2)',
+            [id, allergyName],
+          )
+        }
+
+        for (const conditionName of chronicConditions) {
+          await client.query(
+            'INSERT INTO chronic_conditions (patient_id, condition_name) VALUES ($1, $2)',
+            [id, conditionName],
+          )
+        }
+      } else {
+        const { allergiesByPatient, chronicByPatient } = await loadPatientRelations([id])
+        finalAllergies = allergiesByPatient.get(id) || []
+        finalChronicConditions = chronicByPatient.get(id) || []
       }
 
-      for (const conditionName of chronicConditions) {
-        await client.query(
-          'INSERT INTO chronic_conditions (patient_id, condition_name) VALUES ($1, $2)',
-          [id, conditionName],
-        )
-      }
-
-      return rowToPatient(row, allergies, chronicConditions)
+      return rowToPatient(row, finalAllergies, finalChronicConditions)
     })
     res.json(formatPatient(patient))
   } catch (error) {
