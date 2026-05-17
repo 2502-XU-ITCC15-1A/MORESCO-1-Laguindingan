@@ -97,7 +97,9 @@ function NavBar({ showDrawer = true }) {
               <button
                 className={`nav-page-badge ${onPatientsPage ? 'active' : ''}`}
                 onClick={() => navigate('/patients')}
-                title="Go to patients page"
+                title={onPatientsPage ? undefined : 'Go to patients page'}
+                aria-current={onPatientsPage ? 'page' : undefined}
+                disabled={onPatientsPage}
                 type="button"
               >
                 Patients
@@ -105,7 +107,9 @@ function NavBar({ showDrawer = true }) {
               <button
                 className={`nav-page-badge ${onUserAccessPage ? 'active' : ''}`}
                 onClick={() => navigate('/user-access')}
-                title="Open user access management"
+                title={onUserAccessPage ? undefined : 'Open user access management'}
+                aria-current={onUserAccessPage ? 'page' : undefined}
+                disabled={onUserAccessPage}
                 type="button"
               >
                 User Access
@@ -115,7 +119,9 @@ function NavBar({ showDrawer = true }) {
             <button
               className={`nav-page-badge ${onPatientsPage ? 'active' : ''}`}
               onClick={() => navigate('/patients')}
-              title="Go to patients page"
+              title={onPatientsPage ? undefined : 'Go to patients page'}
+              aria-current={onPatientsPage ? 'page' : undefined}
+              disabled={onPatientsPage}
               type="button"
             >
               Patients
@@ -124,7 +130,9 @@ function NavBar({ showDrawer = true }) {
             <button
               className={`nav-page-badge ${onUserAccessPage ? 'active' : ''}`}
               onClick={() => navigate('/user-access')}
-              title="Open user access management"
+              title={onUserAccessPage ? undefined : 'Open user access management'}
+              aria-current={onUserAccessPage ? 'page' : undefined}
+              disabled={onUserAccessPage}
               type="button"
             >
               User Access
