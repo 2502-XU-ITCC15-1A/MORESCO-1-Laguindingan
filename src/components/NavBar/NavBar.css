@@ -72,6 +72,7 @@
   border: 1px solid rgba(74, 159, 255, 0.3);
   box-shadow: 0 2px 8px rgba(0,0,0,0.4);
   cursor: pointer;
+  appearance: none;
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
   font-family: inherit;
   pointer-events: auto;
@@ -90,11 +91,20 @@
   box-shadow: 0 0 16px rgba(74, 159, 255, 0.3);
 }
 
-.nav-page-badge:hover,
+.nav-page-badge:disabled,
+.nav-page-badge.active[aria-current='page'] {
+  cursor: default;
+}
+
+.nav-page-badge:not(:disabled):hover,
 .nav-profile:hover {
   background: #1a3c9c;
   border-color: rgba(74, 159, 255, 0.7);
   box-shadow: 0 0 16px rgba(74, 159, 255, 0.3);
+}
+
+.nav-page-badge:not(:disabled):hover {
+  transform: translateY(-1px);
 }
 
 .nav-end {

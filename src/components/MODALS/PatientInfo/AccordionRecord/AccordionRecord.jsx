@@ -112,9 +112,14 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
         background: white;
       }
       .logo-wrap img {
-        width: 76px;
-        height: 76px;
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: white;
         object-fit: contain;
+        object-position: center center;
+        padding: 4px;
       }
       .hero-copy h1 {
         margin: 0;
