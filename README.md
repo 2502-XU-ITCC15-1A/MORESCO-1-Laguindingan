@@ -223,6 +223,138 @@ Password: nurse123
 | `npm run lint` | Run ESLint |
 | `npm run db:init` | Initialize PostgreSQL tables |
 | `npm run db:seed` | Seed default data |
+| `npm run backup` | Create a PostgreSQL backup under `backups/YYYY/MM/` |
+| `npm run restore -- "<file>"` | Restore a PostgreSQL backup file into the configured database |
+
+---
+
+## Automatic Backup
+
+The project includes a backup script that creates PostgreSQL dumps in:
+
+```text
+backups/YYYY/MM/moresco_health_YYYY-MM-DD_HH-mm-ss.backup
+```
+
+Run a manual backup anytime with:
+
+```bash
+npm run backup
+```
+
+The backup script will:
+
+- use `docker exec` against the `moresco-db` container when Docker is running
+- fall back to local `pg_dump` using `DATABASE_URL` when Docker is not available
+- remove old backups after the retention period
+
+Optional environment variables:
+
+```env
+BACKUP_DIR="C:/Backups/MORESCO"
+BACKUP_RETENTION_DAYS="365"
+BACKUP_DOCKER_CONTAINER="moresco-db"
+```
+
+### Windows Daily Schedule
+
+To register an automatic daily backup task on Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\register-daily-backup.ps1
+```
+
+Default behavior:
+
+- runs every day
+- runs at `00:00`
+- executes `scripts/run-backup.ps1`, which logs output to `backups/logs/backup.log`
+
+Example with a custom time:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\register-daily-backup.ps1 -Time 14:30
+```
+
+### Linux Daily Schedule
+
+Make the shell scripts executable:
+
+```bash
+chmod +x ./scripts/run-backup.sh ./scripts/run-restore.sh ./scripts/register-daily-backup.sh
+```
+
+To register an automatic daily backup cron job on Linux:
+
+```bash
+./scripts/register-daily-backup.sh
+```
+
+Default behavior:
+
+- runs every day
+- runs at `00:00`
+- executes `scripts/run-backup.sh`, which logs output to `backups/logs/backup.log`
+
+Example with a custom time:
+
+```bash
+./scripts/register-daily-backup.sh 14:30
+```
+
+To test the backup immediately after setup:
+
+```powershell
+npm run backup
+```
+
+---
+
+## Restore From Backup
+
+The project also includes a restore command for PostgreSQL custom-format backups.
+
+Important:
+
+- restore can overwrite the current database contents
+- use it during maintenance windows
+- if possible, make a fresh backup before restoring
+
+Restore a backup file with:
+
+```powershell
+npm run restore -- ".\backups\2026\05\moresco_health_2026-05-18_02-00-00.backup"
+```
+
+The restore script will:
+
+- use `docker exec` with `pg_restore` against the `moresco-db` container when Docker is running
+- fall back to local `pg_restore` using `DATABASE_URL` when Docker is not available
+- restore with `--clean --if-exists` so existing objects are replaced
+
+For a logged restore through PowerShell:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run-restore.ps1 -BackupFile ".\backups\2026\05\moresco_health_2026-05-18_02-00-00.backup"
+```
+
+For a logged restore through Linux shell:
+
+```bash
+./scripts/run-restore.sh "./backups/2026/05/moresco_health_2026-05-18_02-00-00.backup"
+```
+
+Restore logs are written to:
+
+```text
+backups/logs/restore.log
+```
+
+Operational recommendation:
+
+- stop users from editing data while restore is running
+- if you are using Docker, stop the app container first if you want a quieter restore window
+- uploaded files in `uploads/` are not included in the database backup and should be restored separately if needed
 
 ---
 
