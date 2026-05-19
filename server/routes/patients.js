@@ -11,9 +11,29 @@ import { formatPatient, parseJsonArray, toBloodEnum } from '../utils/format.js'
 
 const router = express.Router()
 const upload = imageUpload('patients')
+const PHONE_LENGTH = 11
 
 function fileUrl(req) {
   return req.savedFileUrl
+}
+
+function normalizeDigits(value) {
+  return String(value || '').replace(/\D/g, '').slice(0, PHONE_LENGTH)
+}
+
+function validatePatientContacts(body) {
+  const emergencyContact = normalizeDigits(body.emergencyContact)
+  const contactNumber = normalizeDigits(body.contactNumber)
+
+  if (emergencyContact.length !== PHONE_LENGTH) {
+    return { error: 'Emergency contact must be exactly 11 digits.' }
+  }
+
+  if (contactNumber.length !== PHONE_LENGTH) {
+    return { error: 'Contact number must be exactly 11 digits.' }
+  }
+
+  return { emergencyContact, contactNumber }
 }
 
 function rowToPatient(row, allergies = [], chronicConditions = []) {
@@ -74,6 +94,8 @@ async function loadPatientRelations(ids) {
 }
 
 function patientData(body, req) {
+  const contacts = validatePatientContacts(body)
+
   return {
     firstName: body.firstName?.trim(),
     middleName: body.middleName?.trim() || null,
@@ -84,8 +106,8 @@ function patientData(body, req) {
     sex: body.sex || 'Male',
     height: body.height || '',
     weight: body.weight || '',
-    emergencyContact: body.emergencyContact?.trim() || '',
-    contactNumber: body.contactNumber?.trim() || '',
+    emergencyContact: contacts.emergencyContact || '',
+    contactNumber: contacts.contactNumber || '',
     permAddress: body.permAddress || '',
     presAddress: body.presAddress || '',
     bloodType: toBloodEnum(body.bloodType),
@@ -186,6 +208,11 @@ router.get('/:id', auth, async (req, res) => {
 
 router.post('/', auth, requireCompanyNurse, upload.single('photo'), async (req, res) => {
   try {
+    const contacts = validatePatientContacts(req.body)
+    if (contacts.error) {
+      return res.status(400).json({ message: contacts.error })
+    }
+
     const allergies = parseJsonArray(req.body.allergies)
     const chronicConditions = parseJsonArray(req.body.chronicConditions)
     const idNumber = req.body.idNumber || `M${Date.now().toString().slice(-10)}`
@@ -250,6 +277,11 @@ router.post('/', auth, requireCompanyNurse, upload.single('photo'), async (req, 
 
 router.put('/:id', auth, requirePatientPersonalEditor, upload.single('photo'), async (req, res) => {
   try {
+    const contacts = validatePatientContacts(req.body)
+    if (contacts.error) {
+      return res.status(400).json({ message: contacts.error })
+    }
+
     const id = Number(req.params.id)
     const allergies = parseJsonArray(req.body.allergies)
     const chronicConditions = parseJsonArray(req.body.chronicConditions)

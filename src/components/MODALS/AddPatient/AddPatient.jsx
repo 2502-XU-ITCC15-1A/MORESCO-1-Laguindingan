@@ -9,6 +9,7 @@ import {
 import './AddPatient.css'
 
 const STEPS = ['Basic Info', 'Address', 'Patient Photo']
+const PHONE_LENGTH = 11
 
 const INITIAL_FORM = {
   firstName: '', middleName: '', lastName: '',
@@ -18,6 +19,10 @@ const INITIAL_FORM = {
   permLine1: '', permLine2: '', permCity: '', permBarangay: '', permProvince: '',
   presLine1: '', presLine2: '', presCity: '', presBarangay: '', presProvince: '',
   photo: null, photoPreview: null,
+}
+
+function sanitizeDigits(value) {
+  return String(value || '').replace(/\D/g, '').slice(0, PHONE_LENGTH)
 }
 
 function AddPatient({ show, onClose, onAdd }) {
@@ -40,6 +45,10 @@ function AddPatient({ show, onClose, onAdd }) {
       if (!form.position.trim())   e.position   = 'Required'
       if (!form.height)            e.height     = 'Required'
       if (!form.weightValue)       e.weightValue = 'Required'
+      if (!form.emergencyContact)  e.emergencyContact = 'Emergency contact is required'
+      else if (form.emergencyContact.length !== PHONE_LENGTH) e.emergencyContact = 'Emergency contact must be 11 digits'
+      if (!form.contactNumber)     e.contactNumber = 'Contact number is required'
+      else if (form.contactNumber.length !== PHONE_LENGTH) e.contactNumber = 'Contact number must be 11 digits'
     }
     if (step === 1) {
       if (!form.permLine1.trim())  e.permLine1  = 'Required'
@@ -212,17 +221,25 @@ function AddPatient({ show, onClose, onAdd }) {
                 <label>Emergency Contact</label>
                 <input
                   value={form.emergencyContact}
-                  onChange={e => update('emergencyContact', e.target.value)}
-                  placeholder="Enter emergency contact name"
+                  onChange={e => update('emergencyContact', sanitizeDigits(e.target.value))}
+                  placeholder="Enter 11-digit emergency contact"
+                  inputMode="numeric"
+                  maxLength={PHONE_LENGTH}
+                  className={errors.emergencyContact ? 'err' : ''}
                 />
+                {errors.emergencyContact && <span className="ap-err">{errors.emergencyContact}</span>}
               </div>
               <div className="ap-field">
                 <label>Contact Number</label>
                 <input
                   value={form.contactNumber}
-                  onChange={e => update('contactNumber', e.target.value)}
-                  placeholder="Enter contact number"
+                  onChange={e => update('contactNumber', sanitizeDigits(e.target.value))}
+                  placeholder="Enter 11-digit contact number"
+                  inputMode="numeric"
+                  maxLength={PHONE_LENGTH}
+                  className={errors.contactNumber ? 'err' : ''}
                 />
+                {errors.contactNumber && <span className="ap-err">{errors.contactNumber}</span>}
               </div>
             </div>
           </div>
