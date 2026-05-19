@@ -1,29 +1,12 @@
 import { useState } from 'react'
+import {
+  calculateBMIFromHeightAndWeight,
+  formatWeight,
+  HEIGHT_OPTIONS,
+  parseWeight,
+  WEIGHT_UNIT_OPTIONS,
+} from '../../../../../utils/measurements.js'
 import './Personal.css'
-
-function calculateBMI(height, weight) {
-  if (!height || !weight) return null
-
-  const rawWeight = String(weight).toLowerCase()
-  const weightValue = parseFloat(rawWeight.replace(/[^0-9.]/g, ''))
-  const weightKg = rawWeight.includes('lb') ? weightValue * 0.45359237 : weightValue
-  if (isNaN(weightKg) || weightKg <= 0) return null
-
-  const feetInch = height.match(/(\d+)'(\d+)/)
-  if (feetInch) {
-    const totalInches = parseInt(feetInch[1]) * 12 + parseInt(feetInch[2])
-    const heightM = totalInches * 0.0254
-    return (weightKg / (heightM * heightM)).toFixed(1)
-  }
-
-  const cm = height.match(/(\d+(?:\.\d+)?)\s*cm?/i)
-  if (cm) {
-    const heightM = parseFloat(cm[1]) / 100
-    return (weightKg / (heightM * heightM)).toFixed(1)
-  }
-
-  return null
-}
 
 function getBMIStatus(bmi) {
   const b = parseFloat(bmi)
@@ -138,6 +121,8 @@ const SEX_OPTIONS = ['Male', 'Female']
 const STATUS_OPTIONS = ['Single', 'Married', 'Widowed', 'Separated']
 
 function buildForm(patient) {
+  const parsedWeight = parseWeight(patient?.weight)
+
   return {
     firstName: patient?.firstName || '',
     middleName: patient?.middleName || '',
@@ -150,7 +135,8 @@ function buildForm(patient) {
     emergencyContact: patient?.emergencyContact || '',
     contactNumber: patient?.contactNumber || '',
     height: patient?.height || '',
-    weight: patient?.weight || '',
+    weightValue: parsedWeight.value,
+    weightUnit: parsedWeight.unit,
     permAddress: patient?.permAddress || '',
     presAddress: patient?.presAddress || '',
   }
@@ -164,7 +150,15 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
 
   if (!patient) return null
 
-  const computedBMI = calculateBMI(editMode ? form.height : patient.height, editMode ? form.weight : patient.weight)
+  const measurementWeight = editMode
+    ? formatWeight(form.weightValue, form.weightUnit)
+    : patient.weight
+  const parsedMeasurementWeight = parseWeight(measurementWeight)
+  const computedBMI = calculateBMIFromHeightAndWeight(
+    editMode ? form.height : patient.height,
+    parsedMeasurementWeight.value,
+    parsedMeasurementWeight.unit,
+  )
   const bmiStatus = computedBMI ? getBMIStatus(computedBMI) : null
 
   function updateField(field, value) {
@@ -219,6 +213,7 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
         position: form.position.trim(),
         emergencyContact: form.emergencyContact.trim(),
         contactNumber: form.contactNumber.trim(),
+        weight: formatWeight(form.weightValue, form.weightUnit),
       })
       setEditMode(false)
     } catch (err) {
@@ -314,10 +309,50 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
       <div className="personal-section">
         <h4 className="personal-section-title">Measurements</h4>
         {editMode && canEditMeasurements ? (
-          <div className="info-grid info-three">
-            <PersonalField label="Height" value={form.height} onChange={value => updateField('height', value)} />
-            <PersonalField label="Weight" value={form.weight} onChange={value => updateField('weight', value)} />
-            <InfoBox label="BMI (Auto)" value={computedBMI ?? '-'} badge={bmiStatus} />
+          <div className="info-grid personal-measurements-grid">
+            <label className="personal-edit-field">
+              <span className="personal-edit-label">Height</span>
+              <select
+                className="personal-edit-input"
+                value={form.height}
+                onChange={e => updateField('height', e.target.value)}
+              >
+                <option value="">Select height</option>
+                {HEIGHT_OPTIONS.map(option => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="personal-edit-field">
+              <span className="personal-edit-label">Weight</span>
+              <div className="personal-weight-row">
+                <input
+                  className="personal-edit-input"
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  placeholder="0.0"
+                  value={form.weightValue}
+                  onChange={e => updateField('weightValue', e.target.value)}
+                />
+                <select
+                  className="personal-edit-input"
+                  value={form.weightUnit}
+                  onChange={e => updateField('weightUnit', e.target.value)}
+                >
+                  {WEIGHT_UNIT_OPTIONS.map(option => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </label>
+            <div className="personal-measurements-bmi">
+              <InfoBox label="BMI (Auto)" value={computedBMI ?? '-'} badge={bmiStatus} />
+            </div>
           </div>
         ) : (
           <div className="info-grid info-three">

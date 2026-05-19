@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import Modal from 'react-bootstrap/Modal'
+import {
+  calculateBMIFromHeightAndWeight,
+  formatWeight,
+  HEIGHT_OPTIONS,
+  WEIGHT_UNIT_OPTIONS,
+} from '../../../utils/measurements.js'
 import './AddPatient.css'
 
 const STEPS = ['Basic Info', 'Address', 'Patient Photo']
-const HEIGHT_OPTIONS = Array.from({ length: 37 }, (_, i) => {
-  const totalInches = 48 + i
-  const feet = Math.floor(totalInches / 12)
-  const inches = totalInches % 12
-  return `${feet}'${inches}`
-})
 
 const INITIAL_FORM = {
   firstName: '', middleName: '', lastName: '',
@@ -18,17 +18,6 @@ const INITIAL_FORM = {
   permLine1: '', permLine2: '', permCity: '', permBarangay: '', permProvince: '',
   presLine1: '', presLine2: '', presCity: '', presBarangay: '', presProvince: '',
   photo: null, photoPreview: null,
-}
-
-function calculateBMI(height, weightValue, weightUnit) {
-  const weight = Number(weightValue)
-  const heightMatch = height.match(/^(\d+)'(\d+)$/)
-  if (!heightMatch || !weight || weight <= 0) return ''
-
-  const totalInches = Number(heightMatch[1]) * 12 + Number(heightMatch[2])
-  const heightM = totalInches * 0.0254
-  const weightKg = weightUnit === 'lb' ? weight * 0.45359237 : weight
-  return (weightKg / (heightM * heightM)).toFixed(1)
 }
 
 function AddPatient({ show, onClose, onAdd }) {
@@ -97,7 +86,7 @@ function AddPatient({ show, onClose, onAdd }) {
     payload.append('position', form.position)
     payload.append('status', form.status)
     payload.append('height', form.height)
-    payload.append('weight', `${form.weightValue}${form.weightUnit}`)
+    payload.append('weight', formatWeight(form.weightValue, form.weightUnit))
     payload.append('sex', form.sex)
     payload.append('emergencyContact', form.emergencyContact)
     payload.append('contactNumber', form.contactNumber)
@@ -127,7 +116,7 @@ function AddPatient({ show, onClose, onAdd }) {
     onClose()
   }
 
-  const bmi = calculateBMI(form.height, form.weightValue, form.weightUnit)
+  const bmi = calculateBMIFromHeightAndWeight(form.height, form.weightValue, form.weightUnit)
 
   return (
     <Modal show={show} onHide={handleClose} centered contentClassName="add-patient-modal-content" dialogClassName="add-patient-dialog">
@@ -201,8 +190,9 @@ function AddPatient({ show, onClose, onAdd }) {
                     className={errors.weightValue ? 'err' : ''}
                   />
                   <select value={form.weightUnit} onChange={e => update('weightUnit', e.target.value)} aria-label="Weight unit">
-                    <option value="kg">kg</option>
-                    <option value="lb">lb</option>
+                    {WEIGHT_UNIT_OPTIONS.map(unit => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
                   </select>
                 </div>
                 {errors.weightValue && <span className="ap-err">{errors.weightValue}</span>}

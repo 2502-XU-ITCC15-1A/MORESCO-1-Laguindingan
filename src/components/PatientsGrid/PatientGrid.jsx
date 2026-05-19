@@ -3,6 +3,7 @@ import Patient from '../Patient/Patient.jsx'
 import AddPatient from '../MODALS/AddPatient/AddPatient.jsx'
 import DiseaseManager from '../MODALS/DiseaseManager/DiseaseManager.jsx'
 import { patientsAPI } from '../../api/client.js'
+import { getStoredUser } from '../../utils/authStorage.js'
 import {
   canEditPatientHealth,
   canEditPatientMeasurements,
@@ -26,7 +27,7 @@ function PatientGrid() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [reloadKey, setReloadKey] = useState(0)
-  const user = JSON.parse(localStorage.getItem('user') || '{}')
+  const user = getStoredUser()
   const canEditPatients = canManagePatients(user.role)
   const canEditPersonalInfo = canEditPatientPersonal(user.role)
   const canEditMeasurements = canEditPatientMeasurements(user.role)

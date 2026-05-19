@@ -1,8 +1,10 @@
+import { getAuthToken } from '../utils/authStorage.js'
+
 // If they're on the same server, this line doesn't hurt anything
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 async function apiClient(endpoint, options = {}) {
-  const token = localStorage.getItem('token');
+  const token = getAuthToken();
   
   // Start with user-provided headers
   const headers = {
