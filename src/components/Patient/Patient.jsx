@@ -24,6 +24,9 @@ function Patient({
             className="patient-delete-btn"
             onClick={(e) => {
               e.stopPropagation()
+              if (!window.confirm(`Delete patient ${displayName}? This action cannot be undone.`)) {
+                return
+              }
               onDelete?.(patient.id)
             }}
             title="Delete patient"

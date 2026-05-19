@@ -76,6 +76,12 @@
 .info-three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .info-two   { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .info-one   { grid-template-columns: repeat(1, 1fr); }
+.personal-measurements-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  align-items: end;
+  column-gap: 10px;
+  row-gap: 10px;
+}
 
 .info-box {
   background: linear-gradient(180deg, #00006F 0%, #0D2B77 100%);
@@ -158,6 +164,29 @@
   border-color: #00006F;
 }
 
+.personal-weight-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 1fr) 68px;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.personal-weight-row .personal-edit-input {
+  min-width: 0;
+}
+
+.personal-weight-row input.personal-edit-input {
+  text-align: left;
+}
+
+.personal-measurements-bmi {
+  grid-column: 1 / -1;
+}
+
+.personal-measurements-bmi .info-box {
+  min-height: 72px;
+}
+
 /* Address */
 .addr-box {
   background: linear-gradient(180deg, #00006F 0%, #0D2B77 100%);
@@ -186,6 +215,7 @@
 }
 
 @media (max-width: 640px) {
+  .personal-measurements-grid,
   .info-three,
   .info-two {
     grid-template-columns: 1fr;

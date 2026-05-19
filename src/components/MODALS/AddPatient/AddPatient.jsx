@@ -1,14 +1,15 @@
 import { useState } from 'react'
 import Modal from 'react-bootstrap/Modal'
+import {
+  calculateBMIFromHeightAndWeight,
+  formatWeight,
+  HEIGHT_OPTIONS,
+  WEIGHT_UNIT_OPTIONS,
+} from '../../../utils/measurements.js'
 import './AddPatient.css'
 
 const STEPS = ['Basic Info', 'Address', 'Patient Photo']
-const HEIGHT_OPTIONS = Array.from({ length: 37 }, (_, i) => {
-  const totalInches = 48 + i
-  const feet = Math.floor(totalInches / 12)
-  const inches = totalInches % 12
-  return `${feet}'${inches}`
-})
+const PHONE_LENGTH = 11
 
 const INITIAL_FORM = {
   firstName: '', middleName: '', lastName: '',
@@ -20,15 +21,8 @@ const INITIAL_FORM = {
   photo: null, photoPreview: null,
 }
 
-function calculateBMI(height, weightValue, weightUnit) {
-  const weight = Number(weightValue)
-  const heightMatch = height.match(/^(\d+)'(\d+)$/)
-  if (!heightMatch || !weight || weight <= 0) return ''
-
-  const totalInches = Number(heightMatch[1]) * 12 + Number(heightMatch[2])
-  const heightM = totalInches * 0.0254
-  const weightKg = weightUnit === 'lb' ? weight * 0.45359237 : weight
-  return (weightKg / (heightM * heightM)).toFixed(1)
+function sanitizeDigits(value) {
+  return String(value || '').replace(/\D/g, '').slice(0, PHONE_LENGTH)
 }
 
 function AddPatient({ show, onClose, onAdd }) {
@@ -51,6 +45,10 @@ function AddPatient({ show, onClose, onAdd }) {
       if (!form.position.trim())   e.position   = 'Required'
       if (!form.height)            e.height     = 'Required'
       if (!form.weightValue)       e.weightValue = 'Required'
+      if (!form.emergencyContact)  e.emergencyContact = 'Emergency contact is required'
+      else if (form.emergencyContact.length !== PHONE_LENGTH) e.emergencyContact = 'Emergency contact must be 11 digits'
+      if (!form.contactNumber)     e.contactNumber = 'Contact number is required'
+      else if (form.contactNumber.length !== PHONE_LENGTH) e.contactNumber = 'Contact number must be 11 digits'
     }
     if (step === 1) {
       if (!form.permLine1.trim())  e.permLine1  = 'Required'
@@ -97,7 +95,7 @@ function AddPatient({ show, onClose, onAdd }) {
     payload.append('position', form.position)
     payload.append('status', form.status)
     payload.append('height', form.height)
-    payload.append('weight', `${form.weightValue}${form.weightUnit}`)
+    payload.append('weight', formatWeight(form.weightValue, form.weightUnit))
     payload.append('sex', form.sex)
     payload.append('emergencyContact', form.emergencyContact)
     payload.append('contactNumber', form.contactNumber)
@@ -127,7 +125,7 @@ function AddPatient({ show, onClose, onAdd }) {
     onClose()
   }
 
-  const bmi = calculateBMI(form.height, form.weightValue, form.weightUnit)
+  const bmi = calculateBMIFromHeightAndWeight(form.height, form.weightValue, form.weightUnit)
 
   return (
     <Modal show={show} onHide={handleClose} centered contentClassName="add-patient-modal-content" dialogClassName="add-patient-dialog">
@@ -201,8 +199,9 @@ function AddPatient({ show, onClose, onAdd }) {
                     className={errors.weightValue ? 'err' : ''}
                   />
                   <select value={form.weightUnit} onChange={e => update('weightUnit', e.target.value)} aria-label="Weight unit">
-                    <option value="kg">kg</option>
-                    <option value="lb">lb</option>
+                    {WEIGHT_UNIT_OPTIONS.map(unit => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
                   </select>
                 </div>
                 {errors.weightValue && <span className="ap-err">{errors.weightValue}</span>}
@@ -222,17 +221,25 @@ function AddPatient({ show, onClose, onAdd }) {
                 <label>Emergency Contact</label>
                 <input
                   value={form.emergencyContact}
-                  onChange={e => update('emergencyContact', e.target.value)}
-                  placeholder="Enter emergency contact name"
+                  onChange={e => update('emergencyContact', sanitizeDigits(e.target.value))}
+                  placeholder="Enter 11-digit emergency contact"
+                  inputMode="numeric"
+                  maxLength={PHONE_LENGTH}
+                  className={errors.emergencyContact ? 'err' : ''}
                 />
+                {errors.emergencyContact && <span className="ap-err">{errors.emergencyContact}</span>}
               </div>
               <div className="ap-field">
                 <label>Contact Number</label>
                 <input
                   value={form.contactNumber}
-                  onChange={e => update('contactNumber', e.target.value)}
-                  placeholder="Enter contact number"
+                  onChange={e => update('contactNumber', sanitizeDigits(e.target.value))}
+                  placeholder="Enter 11-digit contact number"
+                  inputMode="numeric"
+                  maxLength={PHONE_LENGTH}
+                  className={errors.contactNumber ? 'err' : ''}
                 />
+                {errors.contactNumber && <span className="ap-err">{errors.contactNumber}</span>}
               </div>
             </div>
           </div>

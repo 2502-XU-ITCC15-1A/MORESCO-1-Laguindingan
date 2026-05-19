@@ -1,19 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 import NavBar from '../../components/NavBar/NavBar.jsx'
+import { clearAuthSession, getStoredUser } from '../../utils/authStorage.js'
 import { getDefaultRoute, roleLabel } from '../../utils/roles.js'
 import './Profile.css'
 
-function getCurrentUser() {
-  try {
-    return JSON.parse(localStorage.getItem('user') || '{}')
-  } catch {
-    return {}
-  }
-}
-
 function Profile() {
   const navigate = useNavigate()
-  const user = getCurrentUser()
+  const user = getStoredUser()
   const displayName = 'Moresco-1'
   const displayRole = roleLabel(user.role)
   const initials = displayName
@@ -25,8 +18,7 @@ function Profile() {
     .toUpperCase() || 'PR'
 
   function handleLogout() {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    clearAuthSession()
     navigate('/login')
   }
 

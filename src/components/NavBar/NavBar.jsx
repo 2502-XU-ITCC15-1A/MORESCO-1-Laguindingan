@@ -3,19 +3,12 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import Drawer from '@mui/material/Drawer'
 import IconButton from '@mui/material/IconButton'
 import { recordsAPI } from '../../api/client.js'
+import { clearAuthSession, getStoredUser } from '../../utils/authStorage.js'
 import { canAccessPatients, canManageUserAccess, canViewDiseaseStats, roleLabel } from '../../utils/roles.js'
 import morescoLogo from '../../assets/logo.png'
 import statsIcon from '../../assets/statss.png'
 import logoutIcon from '../../assets/logout.png'
 import './NavBar.css'
-
-function getCurrentUser() {
-  try {
-    return JSON.parse(localStorage.getItem('user')) || {}
-  } catch {
-    return {}
-  }
-}
 
 function NavBar({ showDrawer = true }) {
   const [drawerOpen, setDrawerOpen] = useState(false)
@@ -27,7 +20,7 @@ function NavBar({ showDrawer = true }) {
   const profileMenuRef = useRef(null)
   const location = useLocation()
   const navigate = useNavigate()
-  const user = getCurrentUser()
+  const user = getStoredUser()
   const displayName = 'Moresco-1'
   const displayRole = roleLabel(user.role)
   const hasPatientsAccess = canAccessPatients(user.role)
@@ -72,8 +65,7 @@ function NavBar({ showDrawer = true }) {
   }, [profileMenuOpen])
 
   function handleLogout() {
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+    clearAuthSession()
     setProfileMenuOpen(false)
     navigate('/login')
   }

@@ -4,6 +4,7 @@ import { diseasesAPI, patientsAPI, recordsAPI } from '../../../api/client.js'
 import AccordionRecord from './AccordionRecord/AccordionRecord.jsx'
 import Personal from './Pages/Personal/Personal.jsx'
 import Health from './Pages/Health/Health.jsx'
+import { getStoredUser } from '../../../utils/authStorage.js'
 import { roleLabel } from '../../../utils/roles.js'
 import morescoLogo from '../../../assets/logo.png'
 import './PatientInfo.css'
@@ -113,13 +114,7 @@ function PatientInfo({
 
   const displayName = `${patient.firstName} ${patient.lastName}`
 
-  let currentUser = {}
-  try {
-    currentUser = JSON.parse(localStorage.getItem('user') || '{}')
-  } catch {
-    currentUser = {}
-  }
-
+  const currentUser = getStoredUser()
   const displayRole = roleLabel(currentUser.role)
 
   function calcAge(birthDate) {

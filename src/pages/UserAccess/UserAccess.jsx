@@ -4,20 +4,13 @@ import Menu from '@mui/material/Menu'
 import MenuItem from '@mui/material/MenuItem'
 import NavBar from '../../components/NavBar/NavBar.jsx'
 import { accessAPI } from '../../api/client.js'
+import { getStoredUser } from '../../utils/authStorage.js'
 import { canManageUserAccess } from '../../utils/roles.js'
 import './UserAccess.css'
 
 const ROLE_OPTIONS = ['HR Admin', 'Company Nurse', 'IT Manager']
 const STATUS_OPTIONS = ['active', 'inactive']
 const PROTECTED_DEFAULT_EMAILS = new Set(['itmanager@moresco.local'])
-
-function getCurrentUser() {
-  try {
-    return JSON.parse(localStorage.getItem('user') || '{}')
-  } catch {
-    return {}
-  }
-}
 
 function createEmptyForm() {
   return {
@@ -40,7 +33,7 @@ function formatDateTime(value) {
 }
 
 function UserAccess() {
-  const currentUser = getCurrentUser()
+  const currentUser = getStoredUser()
   const isAllowed = canManageUserAccess(currentUser.role)
   const [users, setUsers] = useState([])
   const [form, setForm] = useState(createEmptyForm())
@@ -52,8 +45,10 @@ function UserAccess() {
   const [workingUserId, setWorkingUserId] = useState(null)
   const [menuAnchorEl, setMenuAnchorEl] = useState(null)
   const [menuUser, setMenuUser] = useState(null)
+  const editingCurrentUser = Number(editingUserId) === Number(currentUser.id)
   const editingProtectedUser = users.find(user => user.id === editingUserId && isProtectedDefaultUser(user))
   const menuUserProtected = isProtectedDefaultUser(menuUser)
+  const menuUserIsCurrentUser = Number(menuUser?.id) === Number(currentUser.id)
 
   async function loadUsers() {
     if (!isAllowed) return
@@ -302,8 +297,12 @@ function UserAccess() {
 
             <label className="user-access-field">
               <span>Role</span>
-              <select value={form.role} onChange={event => handleFieldChange('role', event.target.value)}>
-                {ROLE_OPTIONS.map(option => (
+              <select
+                value={form.role}
+                onChange={event => handleFieldChange('role', event.target.value)}
+                disabled={editingCurrentUser || Boolean(editingProtectedUser)}
+              >
+                {(editingCurrentUser ? [form.role] : ROLE_OPTIONS).map(option => (
                   <option key={option} value={option}>{option}</option>
                 ))}
               </select>
@@ -314,9 +313,9 @@ function UserAccess() {
               <select
                 value={form.accessStatus}
                 onChange={event => handleFieldChange('accessStatus', event.target.value)}
-                disabled={Boolean(editingProtectedUser)}
+                disabled={editingCurrentUser || Boolean(editingProtectedUser)}
               >
-                {(editingProtectedUser ? ['active'] : STATUS_OPTIONS).map(option => (
+                {(editingCurrentUser || editingProtectedUser ? [form.accessStatus] : STATUS_OPTIONS).map(option => (
                   <option key={option} value={option}>
                     {option === 'active' ? 'Active' : 'Inactive'}
                   </option>
@@ -386,7 +385,7 @@ function UserAccess() {
 
         <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={closeMenu}>
           <MenuItem onClick={handleEditUser}>Edit account</MenuItem>
-          {!menuUserProtected && (
+          {!menuUserProtected && !menuUserIsCurrentUser && (
             <MenuItem onClick={handleToggleStatus}>
               {menuUser?.accessStatus === 'active' ? 'Set inactive' : 'Set active'}
             </MenuItem>

@@ -141,6 +141,20 @@ router.put('/users/:userId', auth, requireItManager, async (req, res) => {
       return res.status(404).json({ message: 'User not found.' })
     }
 
+    if (user.id === req.user.id) {
+      if (payload.role !== req.user.role) {
+        return res.status(400).json({ message: 'You cannot change your own role while using this account.' })
+      }
+
+      if (payload.accessStatus !== 'active') {
+        return res.status(400).json({ message: 'You cannot deactivate the account you are currently using.' })
+      }
+    }
+
+    if (isProtectedDefaultUser(user) && payload.role !== 'IT Manager') {
+      return res.status(400).json({ message: 'The default IT Manager account must remain an IT Manager.' })
+    }
+
     if (isProtectedDefaultUser(user) && payload.accessStatus !== 'active') {
       return res.status(400).json({ message: 'The default IT Manager account must remain active.' })
     }

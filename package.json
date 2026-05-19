@@ -7,6 +7,8 @@
     "dev": "vite",
     "server": "node server/index.js",
     "docker:start": "node server/docker-start.js",
+    "backup": "node server/backup.js",
+    "restore": "node server/restore.js",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
