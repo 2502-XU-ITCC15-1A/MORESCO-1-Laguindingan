@@ -8,6 +8,8 @@ import {
 } from '../../../../../utils/measurements.js'
 import './Personal.css'
 
+const PHONE_LENGTH = 11
+
 function getBMIStatus(bmi) {
   const b = parseFloat(bmi)
   if (isNaN(b)) return null
@@ -81,7 +83,15 @@ function InfoBox({ label, value, badge }) {
   )
 }
 
-function PersonalField({ label, value, onChange, multiline = false, type = 'text' }) {
+function PersonalField({
+  label,
+  value,
+  onChange,
+  multiline = false,
+  type = 'text',
+  inputMode,
+  maxLength,
+}) {
   const Component = multiline ? 'textarea' : 'input'
 
   return (
@@ -93,6 +103,8 @@ function PersonalField({ label, value, onChange, multiline = false, type = 'text
         onChange={e => onChange(e.target.value)}
         type={multiline ? undefined : type}
         rows={multiline ? 3 : undefined}
+        inputMode={multiline ? undefined : inputMode}
+        maxLength={multiline ? undefined : maxLength}
       />
     </label>
   )
@@ -140,6 +152,12 @@ function buildForm(patient) {
     permAddress: patient?.permAddress || '',
     presAddress: patient?.presAddress || '',
   }
+}
+
+function sanitizeDigits(value) {
+  return String(value || '')
+    .replace(/\D/g, '')
+    .slice(0, PHONE_LENGTH)
 }
 
 function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements = false }) {
@@ -199,6 +217,16 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
   async function handleSave() {
     if (!form.firstName.trim() || !form.lastName.trim() || !form.birthDate || form.age === '') {
       setError('First name, last name, birth date, and age are required.')
+      return
+    }
+
+    if (form.emergencyContact && form.emergencyContact.length !== PHONE_LENGTH) {
+      setError('Emergency contact must be exactly 11 digits.')
+      return
+    }
+
+    if (form.contactNumber && form.contactNumber.length !== PHONE_LENGTH) {
+      setError('Contact number must be exactly 11 digits.')
       return
     }
 
@@ -276,8 +304,22 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
             </div>
 
             <div className="info-grid info-two">
-              <PersonalField label="Emergency Contact" value={form.emergencyContact} onChange={value => updateField('emergencyContact', value)} />
-              <PersonalField label="Contact Number" value={form.contactNumber} onChange={value => updateField('contactNumber', value)} />
+              <PersonalField
+                label="Emergency Contact"
+                value={form.emergencyContact}
+                onChange={value => updateField('emergencyContact', sanitizeDigits(value))}
+                type="text"
+                inputMode="numeric"
+                maxLength={PHONE_LENGTH}
+              />
+              <PersonalField
+                label="Contact Number"
+                value={form.contactNumber}
+                onChange={value => updateField('contactNumber', sanitizeDigits(value))}
+                type="text"
+                inputMode="numeric"
+                maxLength={PHONE_LENGTH}
+              />
             </div>
           </>
         ) : (
