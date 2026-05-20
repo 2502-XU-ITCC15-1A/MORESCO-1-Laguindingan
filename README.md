@@ -53,14 +53,24 @@ The system supports:
 MORESCO-1-Laguindingan/
 |-- README.md
 |-- package.json
+|-- package-lock.json
 |-- docker-compose.yml
 |-- Dockerfile
+|-- scripts/
+|   |-- register-daily-backup.ps1
+|   |-- register-daily-backup.sh
+|   |-- run-backup.ps1
+|   |-- run-backup.sh
+|   |-- run-restore.ps1
+|   `-- run-restore.sh
 |-- server/
+|   |-- backup.js
 |   |-- db-init.js
 |   |-- db.js
 |   |-- docker-start.js
 |   |-- index.js
 |   |-- middleware/
+|   |-- restore.js
 |   |-- routes/
 |   |-- seed.js
 |   `-- utils/
@@ -81,6 +91,7 @@ MORESCO-1-Laguindingan/
 - Node.js 18 or newer
 - PostgreSQL database
 - npm
+- Docker and Docker Compose, if you want to run the full stack in containers
 
 ### Installation
 
@@ -96,7 +107,7 @@ Create a `.env` file in the project root and configure your database and authent
 DATABASE_URL="postgresql://USER:PASSWORD@localhost:5432/DATABASE_NAME"
 JWT_SECRET="replace-with-a-secure-secret"
 JWT_EXPIRES_IN="8h"
-CLIENT_ORIGIN="http://localhost:5173"
+CLIENT_ORIGIN="http://localhost:5173,http://127.0.0.1:5173"
 PORT=5000
 ```
 
@@ -106,6 +117,8 @@ Initialize the database schema and seed data:
 npm run db:init
 npm run db:seed
 ```
+
+This step is for local non-Docker setup. The Docker app container runs `npm run docker:start`, which initializes the schema and seeds default data automatically before starting the server.
 
 Start the backend server:
 
@@ -136,12 +149,115 @@ docker compose up -d --build
 This starts:
 
 - PostgreSQL on `localhost:5432`
-- The app on `http://localhost:5173`
+- The built app on `http://localhost:5173`
+
+On container startup, the app service will:
+
+- build and serve the production frontend
+- initialize the database schema
+- seed the default users and diseases
+
+If you change environment variables such as `CLIENT_ORIGIN`, rebuild the app container so the new values are applied:
+
+```bash
+docker compose down
+docker compose up -d --build
+```
 
 To stop it:
 
 ```bash
 docker compose down
+```
+
+---
+
+## CORS Troubleshooting
+
+If the backend logs an error like `CORS blocked: http://127.0.0.1:5173`, the frontend URL opening in the browser does not exactly match the URLs allowed by the backend.
+
+This is a common issue on Linux because some browsers or dev tools open the site as `http://127.0.0.1:5173` instead of `http://localhost:5173`.
+
+### Recommended Local Origins
+
+Allow both common local development origins:
+
+```env
+CLIENT_ORIGIN="http://localhost:5173,http://127.0.0.1:5173"
+```
+
+If you also use ngrok or another public tunnel, include those URLs in the same comma-separated value:
+
+```env
+CLIENT_ORIGIN="http://localhost:5173,http://127.0.0.1:5173,https://*.ngrok-free.app,https://*.ngrok-free.dev"
+```
+
+### Where to Update It
+
+If you want the fix to apply across the project, check these files:
+
+- `.env` for your current machine's runtime configuration
+- `.env.example` as the shared template for other developers
+- `docker-compose.yml` for containerized runs
+- `server/index.js` for the backend fallback default when `CLIENT_ORIGIN` is missing
+
+### Example Changes
+
+In `.env`:
+
+```env
+CLIENT_ORIGIN="http://localhost:5173,http://127.0.0.1:5173,https://your-domain.example"
+```
+
+In `docker-compose.yml`:
+
+```yaml
+environment:
+  CLIENT_ORIGIN: ${CLIENT_ORIGIN:-http://localhost:5173,http://127.0.0.1:5173,https://*.ngrok-free.app,https://*.ngrok-free.dev}
+```
+
+In `server/index.js`:
+
+```js
+const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173,http://127.0.0.1:5173')
+  .split(',').map(o => o.trim());
+```
+
+### Adding Your Own URL
+
+If your frontend runs on a different host, IP, port, or domain, add that exact origin to `CLIENT_ORIGIN`.
+
+Examples:
+
+- `http://192.168.1.20:5173`
+- `http://10.0.0.5:4173`
+- `https://demo.yourcompany.com`
+
+Use a comma-separated list:
+
+```env
+CLIENT_ORIGIN="http://localhost:5173,http://127.0.0.1:5173,http://192.168.1.20:5173,https://demo.yourcompany.com"
+```
+
+Important:
+
+- `http://localhost:5173` and `http://127.0.0.1:5173` are different origins
+- the protocol, host, and port must match exactly unless you intentionally use a wildcard pattern such as `https://*.ngrok-free.app`
+- after changing `.env` or `docker-compose.yml`, restart the backend or rebuild the Docker container
+
+### After Updating Config
+
+For local Node development:
+
+```bash
+npm run server
+```
+
+For Docker:
+
+```bash
+docker compose down
+docker compose up -d --build
 ```
 
 ---
