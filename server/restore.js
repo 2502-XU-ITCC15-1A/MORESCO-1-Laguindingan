@@ -1,6 +1,10 @@
 import 'dotenv/config'
 import fs from 'node:fs'
+import readline from 'node:readline/promises'
 import { spawnSync } from 'node:child_process'
+import { stdin as input, stdout as output } from 'node:process'
+import { pool } from './db.js'
+import { captureDatabaseFingerprint } from './utils/backupFingerprint.js'
 
 function parseDatabaseUrl(connectionString) {
   if (!connectionString) return null
@@ -79,6 +83,45 @@ function getBackupPath() {
   return backupPath
 }
 
+function metadataPathFor(backupPath) {
+  return `${backupPath}.meta.json`
+}
+
+function readBackupMetadata(backupPath) {
+  const metadataPath = metadataPathFor(backupPath)
+  if (!fs.existsSync(metadataPath)) {
+    return null
+  }
+
+  return JSON.parse(fs.readFileSync(metadataPath, 'utf8'))
+}
+
+async function confirmRestoreWhenUnchanged(backupPath) {
+  const backupMetadata = readBackupMetadata(backupPath)
+  if (!backupMetadata?.signature) {
+    return
+  }
+
+  const currentFingerprint = await captureDatabaseFingerprint()
+  if (currentFingerprint.signature !== backupMetadata.signature) {
+    return
+  }
+
+  const rl = readline.createInterface({ input, output })
+
+  try {
+    const answer = await rl.question(
+      'The current database already matches this backup. Continue restoring anyway? (y/N): ',
+    )
+
+    if (!/^y(es)?$/i.test(answer.trim())) {
+      throw new Error('Restore cancelled because the database is already up to date.')
+    }
+  } finally {
+    rl.close()
+  }
+}
+
 function restoreArgs({ host, port, user, database }, backupPath) {
   return [
     '--clean',
@@ -141,9 +184,10 @@ function restoreWithPgRestore(backupPath) {
   )
 }
 
-function main() {
+async function main() {
   try {
     const backupPath = getBackupPath()
+    await confirmRestoreWhenUnchanged(backupPath)
     console.warn('Restore operation started. This may overwrite current database contents.')
 
     if (!restoreWithDocker(backupPath)) {
@@ -155,6 +199,8 @@ function main() {
     console.error('Restore failed:')
     console.error(error.message || error)
     process.exit(1)
+  } finally {
+    await pool.end()
   }
 }
 
