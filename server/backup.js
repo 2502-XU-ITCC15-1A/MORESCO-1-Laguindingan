@@ -2,6 +2,8 @@ import 'dotenv/config'
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
+import { pool } from './db.js'
+import { captureDatabaseFingerprint } from './utils/backupFingerprint.js'
 
 function pad(value) {
   return String(value).padStart(2, '0')
@@ -27,6 +29,10 @@ function buildBackupPath() {
   const dir = path.join(process.env.BACKUP_DIR || defaultBackupDir(), year, month)
   fs.mkdirSync(dir, { recursive: true })
   return path.join(dir, `moresco_health_${year}-${month}-${day}_${hour}-${minute}-${second}.backup`)
+}
+
+function metadataPathFor(backupPath) {
+  return `${backupPath}.meta.json`
 }
 
 function parseDatabaseUrl(connectionString) {
@@ -176,19 +182,27 @@ function pruneOldBackups() {
   walk(rootDir)
 }
 
-function main() {
+async function writeBackupMetadata(outputPath) {
+  const metadata = await captureDatabaseFingerprint()
+  fs.writeFileSync(metadataPathFor(outputPath), `${JSON.stringify(metadata, null, 2)}\n`, 'utf8')
+}
+
+async function main() {
   const outputPath = buildBackupPath()
 
   try {
     if (!backupWithDocker(outputPath)) {
       backupWithPgDump(outputPath)
     }
+    await writeBackupMetadata(outputPath)
     pruneOldBackups()
     console.log(`Backup created successfully: ${outputPath}`)
   } catch (error) {
     console.error('Backup failed:')
     console.error(error.message || error)
     process.exit(1)
+  } finally {
+    await pool.end()
   }
 }
 
