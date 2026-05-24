@@ -41,6 +41,27 @@ function parseManualDateInput(value) {
   return normalized
 }
 
+function getNormalizedRecordDate(record) {
+  if (record?.recordDate) {
+    return String(record.recordDate).slice(0, 10)
+  }
+
+  const rawDate = String(record?.date || '').trim()
+  if (!rawDate) return ''
+
+  if (rawDate.includes('/')) {
+    const parts = rawDate.split('/')
+    if (parts.length === 3) {
+      const [year, month, day] = parts
+      if (year && month && day) {
+        return `${String(year).padStart(4, '0')}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+      }
+    }
+  }
+
+  return rawDate.slice(0, 10)
+}
+
 function sortRecordsByDateDesc(items) {
   return [...items].sort((a, b) => {
     const first = String(a.recordDate || a.date || '')
@@ -65,6 +86,7 @@ function PatientInfo({
   const [records, setRecords] = useState([])
   const [loadingRecords, setLoadingRecords] = useState(false)
   const [recordError, setRecordError] = useState('')
+  const [createRecordError, setCreateRecordError] = useState('')
   const [zoomPhoto, setZoomPhoto] = useState(false)
   const [diseases, setDiseases] = useState([])
   const [openRecordId, setOpenRecordId] = useState(null)
@@ -93,6 +115,7 @@ function PatientInfo({
           setOpenRecordId(null)
           setShowCreateRecordForm(false)
           setNewRecordDate(formatDateForDisplay(getTodayDateInputValue()))
+          setCreateRecordError('')
         }
       } catch (err) {
         if (active) setRecordError(err.message || 'Unable to load records.')
@@ -154,12 +177,19 @@ function PatientInfo({
     const today = getTodayDateInputValue()
 
     if (!selectedDate) {
-      setRecordError('Enter a valid record date in MM/DD/YYYY format.')
+      setCreateRecordError('Enter a valid record date in MM/DD/YYYY format.')
       return
     }
 
     if (selectedDate > today) {
-      setRecordError('Record date cannot be later than today.')
+      setCreateRecordError('Record date cannot be later than today.')
+      return
+    }
+
+    const hasDuplicateDate = records.some(record => getNormalizedRecordDate(record) === selectedDate)
+
+    if (hasDuplicateDate) {
+      setCreateRecordError('A health record already exists for this date.')
       return
     }
 
@@ -179,7 +209,7 @@ function PatientInfo({
     setOpenRecordId(created.id)
     setShowCreateRecordForm(false)
     setNewRecordDate(formatDateForDisplay(getTodayDateInputValue()))
-    setRecordError('')
+    setCreateRecordError('')
   }
 
   async function handleSaveRecord(recordId, form, photoFiles = []) {
@@ -493,7 +523,7 @@ function PatientInfo({
                     value={newRecordDate}
                     onChange={e => {
                       setNewRecordDate(e.target.value)
-                      setRecordError('')
+                      setCreateRecordError('')
                     }}
                     onBlur={() => {
                       const normalized = parseManualDateInput(newRecordDate)
@@ -524,13 +554,14 @@ function PatientInfo({
                     aria-hidden="true"
                     onChange={e => {
                       setNewRecordDate(formatDateForDisplay(e.target.value))
-                      setRecordError('')
+                      setCreateRecordError('')
                     }}
                   />
                 </div>
                 <button className="pi-record-create-btn" onClick={handleAddRecord} type="button">
                   Create record
                 </button>
+                {createRecordError && <div className="pi-record-create-error">{createRecordError}</div>}
               </div>
             )}
 

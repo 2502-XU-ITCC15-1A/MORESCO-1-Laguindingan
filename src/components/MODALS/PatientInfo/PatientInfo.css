@@ -426,6 +426,12 @@
   opacity: 0.9;
 }
 
+.pi-record-create-error {
+  color: #d14343;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .pi-records-list {
   flex: 1;
   overflow-y: auto;
