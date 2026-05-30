@@ -3,9 +3,9 @@ import { query, pool } from './db.js'
 import { initDb } from './db-init.js'
 
 const USERS = [
-  { username: 'admin', email: 'admin@moresco.local', password: 'admin123', role: 'HR Admin' },
-  { username: 'nurse1', email: 'nurse1@moresco.local', password: 'nurse123', role: 'Company Nurse' },
-  { username: 'itmanager', email: 'itmanager@moresco.local', password: 'itmanager123', role: 'IT Manager' },
+  { idNumber: 'HR-ADMIN-001', username: 'admin', email: 'admin@moresco.local', password: 'admin123', role: 'HR Admin' },
+  { idNumber: 'NURSE-001', username: 'nurse1', email: 'nurse1@moresco.local', password: 'nurse123', role: 'Company Nurse' },
+  { idNumber: 'ITM-001', username: 'itmanager', email: 'itmanager@moresco.local', password: 'itmanager123', role: 'IT Manager' },
 ]
 
 const DISEASES = [
@@ -23,12 +23,13 @@ async function seedUsers() {
     await query(
       `
         INSERT INTO users (
-          username, email, password_hash, role, access_status,
+          id_number, username, email, password_hash, role, access_status,
           access_granted_at, invitation_confirmed_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, $5, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         ON CONFLICT (username)
         DO UPDATE SET
+          id_number = EXCLUDED.id_number,
           email = EXCLUDED.email,
           password_hash = EXCLUDED.password_hash,
           role = EXCLUDED.role,
@@ -37,7 +38,7 @@ async function seedUsers() {
           invitation_confirmed_at = COALESCE(users.invitation_confirmed_at, CURRENT_TIMESTAMP),
           updated_at = CURRENT_TIMESTAMP
       `,
-      [user.username, user.email, passwordHash, user.role],
+      [user.idNumber, user.username, user.email, passwordHash, user.role],
     )
   }
 }

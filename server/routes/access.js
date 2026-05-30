@@ -30,12 +30,14 @@ function isProtectedDefaultUser(user) {
 }
 
 async function buildUserPayload(body, { requirePassword }) {
+  const idNumber = normalizeValue(body.idNumber)
   const username = normalizeValue(body.username)
   const email = normalizeEmail(body.email)
   const role = normalizeRole(body.role)
   const accessStatus = normalizeStatus(body.accessStatus || 'active')
   const password = String(body.password || '')
 
+  if (!idNumber) return { error: 'Company ID is required.' }
   if (!username) return { error: 'Username is required.' }
   if (!email) return { error: 'Email is required.' }
   if (!AVAILABLE_ROLES.has(role)) return { error: 'Please choose a valid role.' }
@@ -53,6 +55,7 @@ async function buildUserPayload(body, { requirePassword }) {
   }
 
   return {
+    idNumber,
     username,
     email,
     role,
@@ -67,10 +70,15 @@ router.get('/users', auth, requireItManager, async (req, res) => {
       `
         SELECT
           id,
+          id_number AS "idNumber",
           username,
           email,
           role,
           access_status AS "accessStatus",
+          manually_locked AS "manuallyLocked",
+          locked_until AS "lockedUntil",
+          locked_at AS "lockedAt",
+          lockout_stage AS "lockoutStage",
           created_at AS "createdAt",
           updated_at AS "updatedAt"
         FROM users
@@ -95,20 +103,25 @@ router.post('/users', auth, requireItManager, async (req, res) => {
     const result = await query(
       `
         INSERT INTO users (
-          username, email, password_hash, role, access_status,
+          id_number, username, email, password_hash, role, access_status,
           access_granted_at, invitation_confirmed_at, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
         RETURNING
           id,
+          id_number AS "idNumber",
           username,
           email,
           role,
           access_status AS "accessStatus",
+          manually_locked AS "manuallyLocked",
+          locked_until AS "lockedUntil",
+          locked_at AS "lockedAt",
+          lockout_stage AS "lockoutStage",
           created_at AS "createdAt",
           updated_at AS "updatedAt"
       `,
-      [payload.username, payload.email, payload.passwordHash, payload.role, payload.accessStatus],
+      [payload.idNumber, payload.username, payload.email, payload.passwordHash, payload.role, payload.accessStatus],
     )
 
     res.status(201).json({
@@ -118,7 +131,7 @@ router.post('/users', auth, requireItManager, async (req, res) => {
   } catch (error) {
     console.error('Create user error:', error)
     if (error.code === '23505') {
-      return res.status(409).json({ message: 'That username or email is already assigned to another account.' })
+      return res.status(409).json({ message: 'That company ID, username, or email is already assigned to another account.' })
     }
     res.status(500).json({ message: 'Unable to create the user account.' })
   }
@@ -164,43 +177,55 @@ router.put('/users/:userId', auth, requireItManager, async (req, res) => {
         ? `
             UPDATE users
             SET
-              username = $1,
-              email = $2,
-              role = $3,
-              access_status = $4,
-              password_hash = $5,
+              id_number = $1,
+              username = $2,
+              email = $3,
+              role = $4,
+              access_status = $5,
+              password_hash = $6,
               updated_at = CURRENT_TIMESTAMP
-            WHERE id = $6
+            WHERE id = $7
             RETURNING
               id,
+              id_number AS "idNumber",
               username,
               email,
               role,
               access_status AS "accessStatus",
+              manually_locked AS "manuallyLocked",
+              locked_until AS "lockedUntil",
+              locked_at AS "lockedAt",
+              lockout_stage AS "lockoutStage",
               created_at AS "createdAt",
               updated_at AS "updatedAt"
           `
         : `
             UPDATE users
             SET
-              username = $1,
-              email = $2,
-              role = $3,
-              access_status = $4,
+              id_number = $1,
+              username = $2,
+              email = $3,
+              role = $4,
+              access_status = $5,
               updated_at = CURRENT_TIMESTAMP
-            WHERE id = $5
+            WHERE id = $6
             RETURNING
               id,
+              id_number AS "idNumber",
               username,
               email,
               role,
               access_status AS "accessStatus",
+              manually_locked AS "manuallyLocked",
+              locked_until AS "lockedUntil",
+              locked_at AS "lockedAt",
+              lockout_stage AS "lockoutStage",
               created_at AS "createdAt",
               updated_at AS "updatedAt"
           `,
       payload.passwordHash
-        ? [payload.username, payload.email, payload.role, payload.accessStatus, payload.passwordHash, user.id]
-        : [payload.username, payload.email, payload.role, payload.accessStatus, user.id],
+        ? [payload.idNumber, payload.username, payload.email, payload.role, payload.accessStatus, payload.passwordHash, user.id]
+        : [payload.idNumber, payload.username, payload.email, payload.role, payload.accessStatus, user.id],
     )
 
     res.json({
@@ -210,9 +235,53 @@ router.put('/users/:userId', auth, requireItManager, async (req, res) => {
   } catch (error) {
     console.error('Update user error:', error)
     if (error.code === '23505') {
-      return res.status(409).json({ message: 'That username or email is already assigned to another account.' })
+      return res.status(409).json({ message: 'That company ID, username, or email is already assigned to another account.' })
     }
     res.status(500).json({ message: 'Unable to update the user account.' })
+  }
+})
+
+router.post('/users/:userId/unlock', auth, requireItManager, async (req, res) => {
+  try {
+    const result = await query(
+      `
+        UPDATE users
+        SET
+          failed_login_attempts = 0,
+          lockout_stage = 0,
+          locked_until = NULL,
+          manually_locked = false,
+          locked_at = NULL,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1
+        RETURNING
+          id,
+          id_number AS "idNumber",
+          username,
+          email,
+          role,
+          access_status AS "accessStatus",
+          manually_locked AS "manuallyLocked",
+          locked_until AS "lockedUntil",
+          locked_at AS "lockedAt",
+          lockout_stage AS "lockoutStage",
+          created_at AS "createdAt",
+          updated_at AS "updatedAt"
+      `,
+      [req.params.userId],
+    )
+
+    if (!result.rows[0]) {
+      return res.status(404).json({ message: 'User not found.' })
+    }
+
+    res.json({
+      user: result.rows[0],
+      message: 'User account unlocked successfully.',
+    })
+  } catch (error) {
+    console.error('Unlock user error:', error)
+    res.status(500).json({ message: 'Unable to unlock the user account.' })
   }
 })
 

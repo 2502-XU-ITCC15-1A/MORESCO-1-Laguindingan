@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import {
+  calculateAgeFromBirthDate,
   calculateBMIFromHeightAndWeight,
   formatWeight,
+  getBMIBadge,
   HEIGHT_OPTIONS,
   parseWeight,
   WEIGHT_UNIT_OPTIONS,
@@ -9,32 +11,6 @@ import {
 import './Personal.css'
 
 const PHONE_LENGTH = 11
-
-function getBMIStatus(bmi) {
-  const b = parseFloat(bmi)
-  if (isNaN(b)) return null
-  if (b < 18.5) return { label: 'Underweight', color: '#3b82f6' }
-  if (b < 25) return { label: 'Normal', color: '#16a34a' }
-  if (b < 30) return { label: 'Overweight', color: '#f59e0b' }
-  return { label: 'Obese', color: '#ef4444' }
-}
-
-function calculateAgeFromBirthDate(birthDate) {
-  if (!birthDate) return ''
-
-  const today = new Date()
-  const birth = new Date(birthDate)
-  if (Number.isNaN(birth.getTime())) return ''
-
-  let years = today.getFullYear() - birth.getFullYear()
-  const monthDelta = today.getMonth() - birth.getMonth()
-
-  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birth.getDate())) {
-    years -= 1
-  }
-
-  return years >= 0 ? String(years) : ''
-}
 
 function padNumber(value) {
   return String(value).padStart(2, '0')
@@ -136,11 +112,12 @@ function buildForm(patient) {
   const parsedWeight = parseWeight(patient?.weight)
 
   return {
+    idNumber: patient?.idNumber || '',
     firstName: patient?.firstName || '',
     middleName: patient?.middleName || '',
     lastName: patient?.lastName || '',
     birthDate: patient?.birthDate || '',
-    age: calculateAgeFromBirthDate(patient?.birthDate),
+    age: String(calculateAgeFromBirthDate(patient?.birthDate) ?? ''),
     position: patient?.position || '',
     sex: patient?.sex || 'Male',
     status: patient?.status || 'Single',
@@ -177,7 +154,7 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
     parsedMeasurementWeight.value,
     parsedMeasurementWeight.unit,
   )
-  const bmiStatus = computedBMI ? getBMIStatus(computedBMI) : null
+  const bmiStatus = getBMIBadge({ bmi: computedBMI })
 
   function updateField(field, value) {
     setForm(current => ({ ...current, [field]: value }))
@@ -188,7 +165,7 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
     setForm(current => ({
       ...current,
       birthDate: value,
-      age: calculateAgeFromBirthDate(value),
+      age: String(calculateAgeFromBirthDate(value) ?? ''),
     }))
     setError('')
   }
@@ -220,6 +197,11 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
       return
     }
 
+    if (!form.idNumber.trim()) {
+      setError('Patient ID is required.')
+      return
+    }
+
     if (form.emergencyContact && form.emergencyContact.length !== PHONE_LENGTH) {
       setError('Emergency contact must be exactly 11 digits.')
       return
@@ -235,6 +217,7 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
     try {
       await onUpdate?.({
         ...form,
+        idNumber: form.idNumber.trim(),
         firstName: form.firstName.trim(),
         middleName: form.middleName.trim(),
         lastName: form.lastName.trim(),
@@ -286,6 +269,10 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
 
         {editMode ? (
           <>
+            <div className="info-grid info-one">
+              <PersonalField label="Patient ID" value={form.idNumber} onChange={value => updateField('idNumber', value)} />
+            </div>
+
             <div className="info-grid info-three">
               <PersonalField label="First Name" value={form.firstName} onChange={value => updateField('firstName', value)} />
               <PersonalField label="Middle Name" value={form.middleName} onChange={value => updateField('middleName', value)} />
@@ -324,6 +311,10 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
           </>
         ) : (
           <>
+            <div className="info-grid info-one">
+              <InfoBox label="Patient ID" value={patient.idNumber || '-'} />
+            </div>
+
             <div className="info-grid info-three">
               <InfoBox label="First Name" value={patient.firstName} />
               <InfoBox label="Middle Name" value={patient.middleName || '-'} />

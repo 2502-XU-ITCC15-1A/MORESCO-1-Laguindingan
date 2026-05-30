@@ -30,6 +30,23 @@ export function formatWeight(value, unit = 'kg') {
   return `${normalizedValue}${unit}`
 }
 
+export function calculateAgeFromBirthDate(birthDate) {
+  if (!birthDate) return null
+
+  const today = new Date()
+  const birth = new Date(birthDate)
+  if (Number.isNaN(birth.getTime())) return null
+
+  let years = today.getFullYear() - birth.getFullYear()
+  const monthDelta = today.getMonth() - birth.getMonth()
+
+  if (monthDelta < 0 || (monthDelta === 0 && today.getDate() < birth.getDate())) {
+    years -= 1
+  }
+
+  return years >= 0 ? years : null
+}
+
 export function calculateBMIFromHeightAndWeight(height, weightValue, weightUnit = 'kg') {
   const weight = Number(weightValue)
   const heightMatch = String(height || '').match(/^(\d+)'(\d+)$/)
@@ -41,4 +58,14 @@ export function calculateBMIFromHeightAndWeight(height, weightValue, weightUnit 
   const weightKg = String(weightUnit).toLowerCase() === 'lb' ? weight * 0.45359237 : weight
 
   return (weightKg / (heightM * heightM)).toFixed(1)
+}
+
+export function getBMIBadge({ bmi }) {
+  const numericBMI = Number.parseFloat(bmi)
+  if (Number.isNaN(numericBMI)) return null
+
+  if (numericBMI < 18.5) return { label: 'Underweight', color: '#3b82f6' }
+  if (numericBMI < 25) return { label: 'Normal', color: '#16a34a' }
+  if (numericBMI < 30) return { label: 'Overweight', color: '#f59e0b' }
+  return { label: 'Obese', color: '#ef4444' }
 }

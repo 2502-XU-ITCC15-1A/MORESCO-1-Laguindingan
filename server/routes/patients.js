@@ -97,6 +97,7 @@ function patientData(body, req) {
   const contacts = validatePatientContacts(body)
 
   return {
+    idNumber: body.idNumber?.trim(),
     firstName: body.firstName?.trim(),
     middleName: body.middleName?.trim() || null,
     lastName: body.lastName?.trim(),
@@ -213,10 +214,12 @@ router.post('/', auth, requireCompanyNurse, upload.single('photo'), async (req, 
       return res.status(400).json({ message: contacts.error })
     }
 
+    if (!String(req.body.idNumber || '').trim()) {
+      return res.status(400).json({ message: 'Patient ID is required.' })
+    }
+
     const allergies = parseJsonArray(req.body.allergies)
     const chronicConditions = parseJsonArray(req.body.chronicConditions)
-    const idNumber = req.body.idNumber || `M${Date.now().toString().slice(-10)}`
-
     const patient = await withTransaction(async client => {
       const data = patientData(req.body, req)
       const inserted = await client.query(
@@ -233,7 +236,7 @@ router.post('/', auth, requireCompanyNurse, upload.single('photo'), async (req, 
           data.firstName,
           data.middleName,
           data.lastName,
-          idNumber,
+          data.idNumber,
           data.birthDate,
           data.position,
           data.status,
@@ -271,6 +274,9 @@ router.post('/', auth, requireCompanyNurse, upload.single('photo'), async (req, 
     res.status(201).json(formatPatient(patient))
   } catch (error) {
     console.error('Create patient error:', error)
+    if (error.code === '23505') {
+      return res.status(409).json({ message: 'That patient ID is already assigned to another patient.' })
+    }
     res.status(500).json({ message: 'Server error' })
   }
 })
@@ -280,6 +286,10 @@ router.put('/:id', auth, requirePatientPersonalEditor, upload.single('photo'), a
     const contacts = validatePatientContacts(req.body)
     if (contacts.error) {
       return res.status(400).json({ message: contacts.error })
+    }
+
+    if (!String(req.body.idNumber || '').trim()) {
+      return res.status(400).json({ message: 'Patient ID is required.' })
     }
 
     const id = Number(req.params.id)
@@ -300,26 +310,28 @@ router.put('/:id', auth, requirePatientPersonalEditor, upload.single('photo'), a
             first_name = $1,
             middle_name = $2,
             last_name = $3,
-            birth_date = $4,
-            position = $5,
-            status = $6,
-            sex = $7,
-            height = $8,
-            weight = $9,
-            emergency_contact = $10,
-            contact_number = $11,
-            perm_address = $12,
-            pres_address = $13,
-            blood_type = $14,
-            photo_url = COALESCE($15, photo_url),
+            id_number = $4,
+            birth_date = $5,
+            position = $6,
+            status = $7,
+            sex = $8,
+            height = $9,
+            weight = $10,
+            emergency_contact = $11,
+            contact_number = $12,
+            perm_address = $13,
+            pres_address = $14,
+            blood_type = $15,
+            photo_url = COALESCE($16, photo_url),
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = $16
+          WHERE id = $17
           RETURNING *
         `,
         [
           mergedData.firstName,
           mergedData.middleName,
           mergedData.lastName,
+          mergedData.idNumber,
           mergedData.birthDate,
           mergedData.position,
           mergedData.status,
@@ -370,6 +382,9 @@ router.put('/:id', auth, requirePatientPersonalEditor, upload.single('photo'), a
     res.json(formatPatient(patient))
   } catch (error) {
     console.error('Update patient error:', error)
+    if (error.code === '23505') {
+      return res.status(409).json({ message: 'That patient ID is already assigned to another patient.' })
+    }
     res.status(error.message === 'Patient not found' ? 404 : 500).json({
       message: error.message === 'Patient not found' ? error.message : 'Server error',
     })

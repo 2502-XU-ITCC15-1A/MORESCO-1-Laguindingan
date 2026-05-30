@@ -14,6 +14,7 @@ const PROTECTED_DEFAULT_EMAILS = new Set(['itmanager@moresco.local'])
 
 function createEmptyForm() {
   return {
+    idNumber: '',
     username: '',
     email: '',
     password: '',
@@ -30,6 +31,19 @@ function formatDateTime(value) {
   if (!value) return 'Not yet'
   const date = new Date(value)
   return Number.isNaN(date.getTime()) ? 'Not yet' : date.toLocaleString()
+}
+
+function isAccountLocked(user) {
+  if (!user) return false
+  if (user.manuallyLocked) return true
+  if (!user.lockedUntil) return false
+  const lockedUntil = new Date(user.lockedUntil)
+  return !Number.isNaN(lockedUntil.getTime()) && lockedUntil.getTime() > Date.now()
+}
+
+function formatAccountStatus(user) {
+  if (isAccountLocked(user)) return 'Locked'
+  return user.accessStatus
 }
 
 function UserAccess() {
@@ -115,6 +129,7 @@ function UserAccess() {
     if (!menuUser) return
 
     setForm({
+      idNumber: menuUser.idNumber || '',
       username: menuUser.username || '',
       email: menuUser.email || '',
       password: '',
@@ -175,6 +190,7 @@ function UserAccess() {
     try {
       const result = await accessAPI.updateUser(selectedUser.id, {
         username: selectedUser.username,
+        idNumber: selectedUser.idNumber || '',
         email: selectedUser.email,
         role: selectedUser.role,
         accessStatus: nextStatus,
@@ -189,6 +205,26 @@ function UserAccess() {
     }
   }
 
+  async function handleUnlockUser() {
+    if (!menuUser) return
+    const selectedUser = menuUser
+    closeMenu()
+
+    setWorkingUserId(selectedUser.id)
+    setError('')
+    setMessage('')
+
+    try {
+      const result = await accessAPI.unlockUser(selectedUser.id)
+      setMessage(result.message || 'User account unlocked successfully.')
+      await loadUsers()
+    } catch (err) {
+      setError(err.message || 'Unable to unlock user access.')
+    } finally {
+      setWorkingUserId(null)
+    }
+  }
+
   async function handleSubmit(event) {
     event.preventDefault()
     setSubmitting(true)
@@ -197,6 +233,7 @@ function UserAccess() {
 
     try {
       const payload = {
+        idNumber: form.idNumber.trim(),
         username: form.username.trim(),
         email: form.email.trim(),
         password: form.password,
@@ -262,6 +299,17 @@ function UserAccess() {
           </div>
 
           <form className="user-access-form" onSubmit={handleSubmit}>
+            <label className="user-access-field">
+              <span>Company ID</span>
+              <input
+                type="text"
+                placeholder="EMP-2026-001"
+                value={form.idNumber}
+                onChange={event => handleFieldChange('idNumber', event.target.value)}
+                required
+              />
+            </label>
+
             <label className="user-access-field">
               <span>Username</span>
               <input
@@ -348,6 +396,7 @@ function UserAccess() {
             <div className="user-access-table">
               <div className="user-access-row header">
                 <span>Account</span>
+                <span>Company ID</span>
                 <span>Role</span>
                 <span>Status</span>
                 <span>Created</span>
@@ -361,9 +410,10 @@ function UserAccess() {
                     <strong>{user.email || user.username}</strong>
                     <small>{user.username}</small>
                   </span>
+                  <span>{user.idNumber || '-'}</span>
                   <span>{user.role}</span>
-                  <span className={`status-${String(user.accessStatus || '').toLowerCase()}`}>
-                    {user.accessStatus}
+                  <span className={isAccountLocked(user) ? 'status-locked' : `status-${String(user.accessStatus || '').toLowerCase()}`}>
+                    {formatAccountStatus(user)}
                   </span>
                   <span>{formatDateTime(user.createdAt)}</span>
                   <span>{formatDateTime(user.updatedAt)}</span>
@@ -385,6 +435,9 @@ function UserAccess() {
 
         <Menu anchorEl={menuAnchorEl} open={Boolean(menuAnchorEl)} onClose={closeMenu}>
           <MenuItem onClick={handleEditUser}>Edit account</MenuItem>
+          {isAccountLocked(menuUser) && (
+            <MenuItem onClick={handleUnlockUser}>Unlock account</MenuItem>
+          )}
           {!menuUserProtected && !menuUserIsCurrentUser && (
             <MenuItem onClick={handleToggleStatus}>
               {menuUser?.accessStatus === 'active' ? 'Set inactive' : 'Set active'}
