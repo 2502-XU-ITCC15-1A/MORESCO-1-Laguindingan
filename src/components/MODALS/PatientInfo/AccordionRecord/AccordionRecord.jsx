@@ -231,16 +231,6 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
         font-size: 11px;
         font-weight: 700;
       }
-      .footer {
-        margin-top: 16px;
-        padding-top: 10px;
-        border-top: 1px solid var(--line);
-        display: flex;
-        justify-content: space-between;
-        gap: 16px;
-        font-size: 11px;
-        color: var(--muted);
-      }
       @media print {
         body { background: white; }
         .page { margin: 0; min-height: auto; }
@@ -323,11 +313,6 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
       <div class="wide-section">
         <div class="section-title">Remarks</div>
         <div class="notes">${field(form.remarks)}</div>
-      </div>
-
-      <div class="footer">
-        <span>Generated from MORESCO-1 patient health records</span>
-        <span>Save or print this page as PDF</span>
       </div>
     </div>
   </body>

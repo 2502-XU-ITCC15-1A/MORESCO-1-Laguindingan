@@ -98,6 +98,9 @@ export const accessAPI = {
     method: 'PUT',
     body: JSON.stringify(data),
   }),
+  unlockUser: (userId) => apiClient(`/access/users/${userId}/unlock`, {
+    method: 'POST',
+  }),
   deleteUser: (userId) => apiClient(`/access/users/${userId}`, {
     method: 'DELETE',
   }),

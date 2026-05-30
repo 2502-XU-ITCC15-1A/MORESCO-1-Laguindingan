@@ -3,6 +3,7 @@ import Modal from 'react-bootstrap/Modal'
 import {
   calculateBMIFromHeightAndWeight,
   formatWeight,
+  getBMIBadge,
   HEIGHT_OPTIONS,
   WEIGHT_UNIT_OPTIONS,
 } from '../../../utils/measurements.js'
@@ -12,6 +13,7 @@ const STEPS = ['Basic Info', 'Address', 'Patient Photo']
 const PHONE_LENGTH = 11
 
 const INITIAL_FORM = {
+  idNumber: '',
   firstName: '', middleName: '', lastName: '',
   birthDate: '', position: '', status: 'Single',
   height: '', weightValue: '', weightUnit: 'kg', sex: 'Male',
@@ -39,6 +41,7 @@ function AddPatient({ show, onClose, onAdd }) {
   function validateStep() {
     const e = {}
     if (step === 0) {
+      if (!form.idNumber.trim())   e.idNumber   = 'Required'
       if (!form.firstName.trim())  e.firstName  = 'Required'
       if (!form.lastName.trim())   e.lastName   = 'Required'
       if (!form.birthDate)         e.birthDate  = 'Required'
@@ -88,6 +91,7 @@ function AddPatient({ show, onClose, onAdd }) {
     setErrors({})
 
     const payload = new FormData()
+    payload.append('idNumber', form.idNumber)
     payload.append('firstName', form.firstName)
     payload.append('middleName', form.middleName)
     payload.append('lastName', form.lastName)
@@ -126,6 +130,7 @@ function AddPatient({ show, onClose, onAdd }) {
   }
 
   const bmi = calculateBMIFromHeightAndWeight(form.height, form.weightValue, form.weightUnit)
+  const bmiBadge = getBMIBadge({ bmi })
 
   return (
     <Modal show={show} onHide={handleClose} centered contentClassName="add-patient-modal-content" dialogClassName="add-patient-dialog">
@@ -138,6 +143,14 @@ function AddPatient({ show, onClose, onAdd }) {
         {/* Step 1 — Basic Info */}
         {step === 0 && (
           <div className="ap-section">
+            <div className="ap-row ap-three">
+              <div className="ap-field">
+                <label>Patient ID <span className="req">*</span></label>
+                <input value={form.idNumber} onChange={e => update('idNumber', e.target.value)} className={errors.idNumber ? 'err' : ''}/>
+                {errors.idNumber && <span className="ap-err">{errors.idNumber}</span>}
+              </div>
+            </div>
+
             <div className="ap-row ap-three">
               <div className="ap-field">
                 <label>First Name <span className="req">*</span></label>
@@ -205,7 +218,10 @@ function AddPatient({ show, onClose, onAdd }) {
                   </select>
                 </div>
                 {errors.weightValue && <span className="ap-err">{errors.weightValue}</span>}
-                <span className="ap-bmi-preview">BMI: {bmi || '--'}</span>
+                <span className="ap-bmi-preview">
+                  BMI: {bmi || '--'}
+                  {bmiBadge ? ` (${bmiBadge.label})` : ''}
+                </span>
               </div>
               <div className="ap-field">
                 <label>Sex</label>

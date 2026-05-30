@@ -47,8 +47,14 @@ const statements = [
   `,
   `
     ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS id_number TEXT,
     ADD COLUMN IF NOT EXISTS email TEXT,
     ADD COLUMN IF NOT EXISTS access_status TEXT NOT NULL DEFAULT 'active',
+    ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS lockout_stage INTEGER NOT NULL DEFAULT 0,
+    ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP(3),
+    ADD COLUMN IF NOT EXISTS manually_locked BOOLEAN NOT NULL DEFAULT false,
+    ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP(3),
     ADD COLUMN IF NOT EXISTS invitation_token TEXT,
     ADD COLUMN IF NOT EXISTS invited_by INTEGER REFERENCES users(id),
     ADD COLUMN IF NOT EXISTS invitation_sent_at TIMESTAMP(3),
@@ -59,6 +65,11 @@ const statements = [
     CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx
     ON users (LOWER(email))
     WHERE email IS NOT NULL;
+  `,
+  `
+    CREATE UNIQUE INDEX IF NOT EXISTS users_id_number_unique_idx
+    ON users (id_number)
+    WHERE id_number IS NOT NULL AND BTRIM(id_number) <> '';
   `,
   `
     CREATE UNIQUE INDEX IF NOT EXISTS users_invitation_token_unique_idx
