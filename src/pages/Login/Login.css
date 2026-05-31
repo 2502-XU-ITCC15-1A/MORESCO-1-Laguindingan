@@ -98,6 +98,60 @@
   color: #aab4c8;
 }
 
+.login-password-wrap {
+  flex: 1;
+  position: relative;
+  display: flex;
+}
+
+.login-password-input {
+  width: 100%;
+  padding-right: 3rem;
+}
+
+.login-password-input::-ms-reveal,
+.login-password-input::-ms-clear {
+  display: none;
+}
+
+.login-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.65rem;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #111830;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.8;
+  transition: opacity 0.15s ease;
+}
+
+.login-password-toggle:hover {
+  opacity: 1;
+}
+
+.login-password-toggle:focus {
+  outline: none;
+}
+
+.login-password-toggle:focus-visible {
+  outline: 2px solid rgba(74, 127, 212, 0.45);
+  outline-offset: 1px;
+  border-radius: 4px;
+}
+
+.login-password-toggle-icon {
+  width: 21px;
+  height: 21px;
+}
+
 .login-error {
   color: #ff8888;
   font-size: 0.85rem;

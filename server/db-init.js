@@ -20,11 +20,6 @@ const statements = [
       password_hash TEXT NOT NULL,
       role TEXT NOT NULL,
       access_status TEXT NOT NULL DEFAULT 'active',
-      invitation_token TEXT,
-      invited_by INTEGER REFERENCES users(id),
-      invitation_sent_at TIMESTAMP(3),
-      access_granted_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      invitation_confirmed_at TIMESTAMP(3),
       created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
@@ -54,12 +49,7 @@ const statements = [
     ADD COLUMN IF NOT EXISTS lockout_stage INTEGER NOT NULL DEFAULT 0,
     ADD COLUMN IF NOT EXISTS locked_until TIMESTAMP(3),
     ADD COLUMN IF NOT EXISTS manually_locked BOOLEAN NOT NULL DEFAULT false,
-    ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP(3),
-    ADD COLUMN IF NOT EXISTS invitation_token TEXT,
-    ADD COLUMN IF NOT EXISTS invited_by INTEGER REFERENCES users(id),
-    ADD COLUMN IF NOT EXISTS invitation_sent_at TIMESTAMP(3),
-    ADD COLUMN IF NOT EXISTS access_granted_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    ADD COLUMN IF NOT EXISTS invitation_confirmed_at TIMESTAMP(3);
+    ADD COLUMN IF NOT EXISTS locked_at TIMESTAMP(3);
   `,
   `
     CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx
@@ -70,11 +60,6 @@ const statements = [
     CREATE UNIQUE INDEX IF NOT EXISTS users_id_number_unique_idx
     ON users (id_number)
     WHERE id_number IS NOT NULL AND BTRIM(id_number) <> '';
-  `,
-  `
-    CREATE UNIQUE INDEX IF NOT EXISTS users_invitation_token_unique_idx
-    ON users (invitation_token)
-    WHERE invitation_token IS NOT NULL;
   `,
   `
     CREATE TABLE IF NOT EXISTS patients (

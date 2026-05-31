@@ -14,24 +14,13 @@ export function isItManager(req) {
   return normalizedRole(req) === 'it manager'
 }
 
-export function canManageClinicalData(req) {
-  return isCompanyNurse(req) || isItManager(req)
-}
-
 export function canEditPatientPersonal(req) {
   return isHrAdmin(req) || isCompanyNurse(req)
 }
 
-export function requireHrAdmin(req, res, next) {
-  if (!isHrAdmin(req)) {
-    return res.status(403).json({ message: 'HR Admin access required' })
-  }
-  next()
-}
-
 export function requireCompanyNurse(req, res, next) {
-  if (!canManageClinicalData(req)) {
-    return res.status(403).json({ message: 'Company Nurse or IT Manager access required' })
+  if (!isCompanyNurse(req)) {
+    return res.status(403).json({ message: 'Company Nurse access required' })
   }
   next()
 }
@@ -51,7 +40,7 @@ export function requireOnlyCompanyNurse(req, res, next) {
 }
 
 export function requireDiseaseManager(req, res, next) {
-  if (!isHrAdmin(req) && !isCompanyNurse(req) && !isItManager(req)) {
+  if (!isHrAdmin(req) && !isCompanyNurse(req)) {
     return res.status(403).json({ message: 'Disease management access required' })
   }
   next()

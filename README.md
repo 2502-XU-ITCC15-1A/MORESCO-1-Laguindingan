@@ -24,7 +24,8 @@ The system supports:
 - Health record creation, editing, deletion, filtering, diagnosis tracking, and photo attachments
 - Common disease statistics in the dashboard drawer
 - Disease dictionary management for HR Admin and Company Nurse
-- Role-aware access for patient editing, health record editing, and disease management
+- IT Manager user account creation, role assignment, access status updates, unlock, and delete actions
+- Role-aware access for patient editing, health record editing, disease management, and user access management
 
 ---
 
@@ -111,6 +112,8 @@ CLIENT_ORIGIN="http://localhost:5173,http://127.0.0.1:5173"
 PORT=5000
 ```
 
+You can copy `.env.example` and adjust the values for your machine.
+
 Initialize the database schema and seed data:
 
 ```bash
@@ -137,6 +140,58 @@ Open the app at:
 ```text
 http://localhost:5173
 ```
+
+### Local Setup Without Docker
+
+Docker is optional for the application, but PostgreSQL is still required. If you do not want to use Docker, install PostgreSQL on the machine and create a database that matches `.env`.
+
+Required local PostgreSQL settings:
+
+```text
+Host: localhost
+Port: 5432
+Database: moresco_health
+Username: moresco
+Password: moresco_password
+```
+
+The matching `.env` value is:
+
+```env
+DATABASE_URL="postgresql://moresco:moresco_password@localhost:5432/moresco_health"
+```
+
+After PostgreSQL is running locally, initialize and seed the database:
+
+```bash
+npm run db:init
+npm run db:seed
+```
+
+Then run the app manually:
+
+```bash
+npm run server
+npm run dev
+```
+
+Run those commands in separate terminals. If `npm run server` shows `ECONNREFUSED 127.0.0.1:5432`, PostgreSQL is not running or is not listening on port `5432`.
+
+### Local Development With Docker Database Only
+
+For development, you can run only the database in Docker while keeping the backend and frontend manual:
+
+```bash
+docker compose up -d db
+npm run server
+npm run dev
+```
+
+In this mode:
+
+- PostgreSQL runs in Docker on `localhost:5432`
+- Express runs manually on `localhost:5000`
+- Vite runs manually on the URL shown in the terminal
 
 ### Docker Setup
 
@@ -276,6 +331,11 @@ Username: nurse1
 Password: nurse123
 ```
 
+```text
+Username: itmanager
+Password: itmanager123
+```
+
 ---
 
 ## How to Operate the System
@@ -283,8 +343,9 @@ Password: nurse123
 ### Log In
 
 1. Open `http://localhost:5173`.
-2. Enter the administrator or nurse credentials.
-3. After login, the system redirects to the Patients page.
+2. Enter your assigned credentials.
+3. HR Admin and Company Nurse are redirected to the Patients page.
+4. IT Manager is redirected to the User Access page.
 
 ### Add a Patient
 
@@ -301,6 +362,15 @@ Password: nurse123
 2. Review the patient's photo, personal information, address, BMI, health details, and records.
 3. Company Nurse can edit patient details and records.
 4. HR Admin can view only.
+
+### Manage User Access
+
+1. Sign in as the `IT Manager`.
+2. Open the `User Access` page from the top navigation.
+3. Create accounts for HR Admin, Company Nurse, or IT Manager.
+4. Edit usernames, company IDs, emails, roles, and access status.
+5. Unlock locked accounts when needed.
+6. Delete accounts that are no longer needed.
 
 ### Manage Health Records
 
@@ -319,8 +389,10 @@ Password: nurse123
 
 ### View Disease Statistics
 
-1. Click the `Patients` badge in the top navigation.
-2. Use the month selector in the right drawer to filter common disease counts.
+1. Sign in as `Company Nurse`.
+2. Open the profile menu in the top-right corner.
+3. Click `Common Disease Stats`.
+4. Use the month range filters in the right drawer to filter common disease counts.
 
 ### Log Out
 
@@ -478,5 +550,7 @@ Operational recommendation:
 
 - Uploaded patient photos and record photos are served from `/uploads`.
 - Uploaded files are stored on disk under `uploads/patients/...` and `uploads/records/...`; the database stores only the file path.
+- PostgreSQL backups include database rows and photo paths, but not the actual image files. Keep a copy of the `uploads/` folder when moving, backing up, or restoring the system.
+- If Docker is used, uploaded files live in the Docker volume mounted at `/app/uploads`; if the app is run manually, uploaded files live in the project `uploads/` folder.
 - During local development, Vite proxies `/api` and `/uploads` to the Express backend on port `5000`.
 - Keep the backend running while using the frontend so patient data, disease statistics, and uploaded images load correctly.

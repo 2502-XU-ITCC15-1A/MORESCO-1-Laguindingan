@@ -23,10 +23,9 @@ async function seedUsers() {
     await query(
       `
         INSERT INTO users (
-          id_number, username, email, password_hash, role, access_status,
-          access_granted_at, invitation_confirmed_at, updated_at
+          id_number, username, email, password_hash, role, access_status, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, $5, 'active', CURRENT_TIMESTAMP)
         ON CONFLICT (username)
         DO UPDATE SET
           id_number = EXCLUDED.id_number,
@@ -34,8 +33,6 @@ async function seedUsers() {
           password_hash = EXCLUDED.password_hash,
           role = EXCLUDED.role,
           access_status = 'active',
-          access_granted_at = COALESCE(users.access_granted_at, CURRENT_TIMESTAMP),
-          invitation_confirmed_at = COALESCE(users.invitation_confirmed_at, CURRENT_TIMESTAMP),
           updated_at = CURRENT_TIMESTAMP
       `,
       [user.idNumber, user.username, user.email, passwordHash, user.role],

@@ -9,6 +9,7 @@ import './Login.css'
 function Login() {
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
@@ -69,14 +70,54 @@ function Login() {
           </div>
           <div className="login-field">
             <label className="login-label">Password:</label>
-            <input
-              className="login-input"
-              type="password"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              autoComplete="current-password"
-              placeholder="Enter password"
-            />
+            <div className="login-password-wrap">
+              <input
+                className="login-input login-password-input"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                autoComplete="current-password"
+                placeholder="Enter password"
+              />
+              <button
+                className="login-password-toggle"
+                type="button"
+                onClick={() => setShowPassword(current => !current)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  aria-hidden="true"
+                  className="login-password-toggle-icon"
+                >
+                  <path
+                    d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.9"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <circle
+                    cx="12"
+                    cy="12"
+                    r="3"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.9"
+                  />
+                  {showPassword && (
+                    <path
+                      d="M4 20 20 4"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.9"
+                      strokeLinecap="round"
+                    />
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
 
           {error && <p className="login-error">{error}</p>}
