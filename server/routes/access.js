@@ -103,10 +103,9 @@ router.post('/users', auth, requireItManager, async (req, res) => {
     const result = await query(
       `
         INSERT INTO users (
-          id_number, username, email, password_hash, role, access_status,
-          access_granted_at, invitation_confirmed_at, updated_at
+          id_number, username, email, password_hash, role, access_status, updated_at
         )
-        VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP)
         RETURNING
           id,
           id_number AS "idNumber",
@@ -305,7 +304,6 @@ router.delete('/users/:userId', auth, requireItManager, async (req, res) => {
       return res.status(400).json({ message: 'The default IT Manager account cannot be deleted.' })
     }
 
-    await query('UPDATE users SET invited_by = NULL WHERE invited_by = $1', [user.id])
     await query('DELETE FROM users WHERE id = $1', [user.id])
 
     res.json({ message: 'User deleted successfully.' })

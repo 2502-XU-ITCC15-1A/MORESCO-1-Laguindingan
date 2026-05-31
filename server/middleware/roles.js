@@ -14,23 +14,12 @@ export function isItManager(req) {
   return normalizedRole(req) === 'it manager'
 }
 
-export function canManageClinicalData(req) {
-  return isCompanyNurse(req)
-}
-
 export function canEditPatientPersonal(req) {
   return isHrAdmin(req) || isCompanyNurse(req)
 }
 
-export function requireHrAdmin(req, res, next) {
-  if (!isHrAdmin(req)) {
-    return res.status(403).json({ message: 'HR Admin access required' })
-  }
-  next()
-}
-
 export function requireCompanyNurse(req, res, next) {
-  if (!canManageClinicalData(req)) {
+  if (!isCompanyNurse(req)) {
     return res.status(403).json({ message: 'Company Nurse access required' })
   }
   next()
