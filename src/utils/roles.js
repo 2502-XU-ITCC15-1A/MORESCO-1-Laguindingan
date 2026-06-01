@@ -43,7 +43,7 @@ export function canManageDiseases(role) {
 }
 
 export function canViewDiseaseStats(role) {
-  return isCompanyNurse(role)
+  return isHrAdmin(role) || isCompanyNurse(role)
 }
 
 export function canManageUserAccess(role) {

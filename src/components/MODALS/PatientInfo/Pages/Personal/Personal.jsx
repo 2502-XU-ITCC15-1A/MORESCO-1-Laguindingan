@@ -11,6 +11,7 @@ import {
 import './Personal.css'
 
 const PHONE_LENGTH = 11
+const PATIENT_ID_LENGTH = 4
 
 function padNumber(value) {
   return String(value).padStart(2, '0')
@@ -137,6 +138,12 @@ function sanitizeDigits(value) {
     .slice(0, PHONE_LENGTH)
 }
 
+function sanitizePatientId(value) {
+  return String(value || '')
+    .replace(/\D/g, '')
+    .slice(0, PATIENT_ID_LENGTH)
+}
+
 function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements = false }) {
   const [editMode, setEditMode] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -154,7 +161,11 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
     parsedMeasurementWeight.value,
     parsedMeasurementWeight.unit,
   )
-  const bmiStatus = getBMIBadge({ bmi: computedBMI })
+  const bmiStatus = getBMIBadge({
+    bmi: computedBMI,
+    birthDate: editMode ? form.birthDate : patient.birthDate,
+    age: editMode ? form.age : age,
+  })
 
   function updateField(field, value) {
     setForm(current => ({ ...current, [field]: value }))
@@ -197,8 +208,8 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
       return
     }
 
-    if (!form.idNumber.trim()) {
-      setError('Patient ID is required.')
+    if (form.idNumber.length !== PATIENT_ID_LENGTH) {
+      setError(`Patient ID must be exactly ${PATIENT_ID_LENGTH} digits.`)
       return
     }
 
@@ -270,7 +281,13 @@ function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements
         {editMode ? (
           <>
             <div className="info-grid info-one">
-              <PersonalField label="Patient ID" value={form.idNumber} onChange={value => updateField('idNumber', value)} />
+              <PersonalField
+                label="Patient ID"
+                value={form.idNumber}
+                onChange={value => updateField('idNumber', sanitizePatientId(value))}
+                inputMode="numeric"
+                maxLength={PATIENT_ID_LENGTH}
+              />
             </div>
 
             <div className="info-grid info-three">

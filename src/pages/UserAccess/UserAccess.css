@@ -66,20 +66,13 @@
   gap: 8px;
 }
 
-.user-access-field:nth-child(1) {
-  grid-column: span 2;
-}
-
-.user-access-field:nth-child(2) {
-  grid-column: span 2;
-}
-
+.user-access-field:nth-child(1),
+.user-access-field:nth-child(2),
 .user-access-field:nth-child(3),
 .user-access-field:nth-child(4),
 .user-access-field:nth-child(5),
-.user-access-field:nth-child(6),
 .user-access-form .primary-btn {
-  grid-column: span 1;
+  grid-column: span 2;
 }
 
 .user-access-field span {
@@ -175,7 +168,7 @@
 
 .user-access-row {
   display: grid;
-  grid-template-columns: minmax(230px, 2fr) minmax(140px, 1fr) 1fr 0.8fr 1.1fr 1.1fr 80px;
+  grid-template-columns: minmax(230px, 2fr) 1fr 0.8fr 1.1fr 1.1fr 80px;
   gap: 12px;
   align-items: center;
   padding: 14px 18px;
@@ -253,7 +246,6 @@
   .user-access-field:nth-child(2),
   .user-access-field:nth-child(3),
   .user-access-field:nth-child(4),
-  .user-access-field:nth-child(5),
   .user-access-form .primary-btn {
     grid-column: span 1;
   }

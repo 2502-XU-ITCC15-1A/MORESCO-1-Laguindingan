@@ -42,7 +42,6 @@ const statements = [
   `,
   `
     ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS id_number TEXT,
     ADD COLUMN IF NOT EXISTS email TEXT,
     ADD COLUMN IF NOT EXISTS access_status TEXT NOT NULL DEFAULT 'active',
     ADD COLUMN IF NOT EXISTS failed_login_attempts INTEGER NOT NULL DEFAULT 0,
@@ -55,11 +54,6 @@ const statements = [
     CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx
     ON users (LOWER(email))
     WHERE email IS NOT NULL;
-  `,
-  `
-    CREATE UNIQUE INDEX IF NOT EXISTS users_id_number_unique_idx
-    ON users (id_number)
-    WHERE id_number IS NOT NULL AND BTRIM(id_number) <> '';
   `,
   `
     CREATE TABLE IF NOT EXISTS patients (

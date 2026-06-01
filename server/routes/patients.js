@@ -12,6 +12,7 @@ import { formatPatient, parseJsonArray, toBloodEnum } from '../utils/format.js'
 const router = express.Router()
 const upload = imageUpload('patients')
 const PHONE_LENGTH = 11
+const PATIENT_ID_LENGTH = 4
 
 function fileUrl(req) {
   return req.savedFileUrl
@@ -34,6 +35,20 @@ function validatePatientContacts(body) {
   }
 
   return { emergencyContact, contactNumber }
+}
+
+function normalizePatientId(value) {
+  return String(value || '').replace(/\D/g, '').slice(0, PATIENT_ID_LENGTH)
+}
+
+function validatePatientId(body) {
+  const idNumber = normalizePatientId(body.idNumber)
+
+  if (idNumber.length !== PATIENT_ID_LENGTH) {
+    return { error: `Patient ID must be exactly ${PATIENT_ID_LENGTH} digits.` }
+  }
+
+  return { idNumber }
 }
 
 function rowToPatient(row, allergies = [], chronicConditions = []) {
@@ -95,9 +110,10 @@ async function loadPatientRelations(ids) {
 
 function patientData(body, req) {
   const contacts = validatePatientContacts(body)
+  const patientId = validatePatientId(body)
 
   return {
-    idNumber: body.idNumber?.trim(),
+    idNumber: patientId.idNumber || '',
     firstName: body.firstName?.trim(),
     middleName: body.middleName?.trim() || null,
     lastName: body.lastName?.trim(),
@@ -214,8 +230,9 @@ router.post('/', auth, requireCompanyNurse, upload.single('photo'), async (req, 
       return res.status(400).json({ message: contacts.error })
     }
 
-    if (!String(req.body.idNumber || '').trim()) {
-      return res.status(400).json({ message: 'Patient ID is required.' })
+    const patientId = validatePatientId(req.body)
+    if (patientId.error) {
+      return res.status(400).json({ message: patientId.error })
     }
 
     const allergies = parseJsonArray(req.body.allergies)
@@ -288,8 +305,9 @@ router.put('/:id', auth, requirePatientPersonalEditor, upload.single('photo'), a
       return res.status(400).json({ message: contacts.error })
     }
 
-    if (!String(req.body.idNumber || '').trim()) {
-      return res.status(400).json({ message: 'Patient ID is required.' })
+    const patientId = validatePatientId(req.body)
+    if (patientId.error) {
+      return res.status(400).json({ message: patientId.error })
     }
 
     const id = Number(req.params.id)

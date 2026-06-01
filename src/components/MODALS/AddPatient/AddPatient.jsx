@@ -11,6 +11,7 @@ import './AddPatient.css'
 
 const STEPS = ['Basic Info', 'Address', 'Patient Photo']
 const PHONE_LENGTH = 11
+const PATIENT_ID_LENGTH = 4
 
 const INITIAL_FORM = {
   idNumber: '',
@@ -27,6 +28,10 @@ function sanitizeDigits(value) {
   return String(value || '').replace(/\D/g, '').slice(0, PHONE_LENGTH)
 }
 
+function sanitizePatientId(value) {
+  return String(value || '').replace(/\D/g, '').slice(0, PATIENT_ID_LENGTH)
+}
+
 function AddPatient({ show, onClose, onAdd }) {
   const [step, setStep]   = useState(0)
   const [form, setForm]   = useState(INITIAL_FORM)
@@ -41,7 +46,7 @@ function AddPatient({ show, onClose, onAdd }) {
   function validateStep() {
     const e = {}
     if (step === 0) {
-      if (!form.idNumber.trim())   e.idNumber   = 'Required'
+      if (form.idNumber.length !== PATIENT_ID_LENGTH) e.idNumber = `Patient ID must be ${PATIENT_ID_LENGTH} digits`
       if (!form.firstName.trim())  e.firstName  = 'Required'
       if (!form.lastName.trim())   e.lastName   = 'Required'
       if (!form.birthDate)         e.birthDate  = 'Required'
@@ -130,7 +135,7 @@ function AddPatient({ show, onClose, onAdd }) {
   }
 
   const bmi = calculateBMIFromHeightAndWeight(form.height, form.weightValue, form.weightUnit)
-  const bmiBadge = getBMIBadge({ bmi })
+  const bmiBadge = getBMIBadge({ bmi, birthDate: form.birthDate })
 
   return (
     <Modal show={show} onHide={handleClose} centered contentClassName="add-patient-modal-content" dialogClassName="add-patient-dialog">
@@ -146,7 +151,14 @@ function AddPatient({ show, onClose, onAdd }) {
             <div className="ap-row ap-three">
               <div className="ap-field">
                 <label>Patient ID <span className="req">*</span></label>
-                <input value={form.idNumber} onChange={e => update('idNumber', e.target.value)} className={errors.idNumber ? 'err' : ''}/>
+                <input
+                  value={form.idNumber}
+                  onChange={e => update('idNumber', sanitizePatientId(e.target.value))}
+                  className={errors.idNumber ? 'err' : ''}
+                  inputMode="numeric"
+                  maxLength={PATIENT_ID_LENGTH}
+                  placeholder="0001"
+                />
                 {errors.idNumber && <span className="ap-err">{errors.idNumber}</span>}
               </div>
             </div>
