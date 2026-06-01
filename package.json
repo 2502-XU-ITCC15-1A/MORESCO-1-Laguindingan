@@ -13,7 +13,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "db:init": "node server/db-init.js",
-    "db:seed": "node server/seed.js"
+    "db:seed": "node server/seed.js",
+    "reset:it-manager": "node server/reset-it-manager-password.js"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

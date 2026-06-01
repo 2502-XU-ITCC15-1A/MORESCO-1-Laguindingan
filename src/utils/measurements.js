@@ -60,9 +60,18 @@ export function calculateBMIFromHeightAndWeight(height, weightValue, weightUnit 
   return (weightKg / (heightM * heightM)).toFixed(1)
 }
 
-export function getBMIBadge({ bmi }) {
+export function getBMIBadge({ bmi, birthDate, age } = {}) {
   const numericBMI = Number.parseFloat(bmi)
   if (Number.isNaN(numericBMI)) return null
+
+  const patientAge = Number.isFinite(Number(age)) ? Number(age) : calculateAgeFromBirthDate(birthDate)
+
+  if (patientAge !== null && patientAge < 20) {
+    return {
+      label: 'Child/Teen BMI',
+      color: '#2563eb',
+    }
+  }
 
   if (numericBMI < 18.5) return { label: 'Underweight', color: '#3b82f6' }
   if (numericBMI < 25) return { label: 'Normal', color: '#16a34a' }

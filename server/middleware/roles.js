@@ -18,6 +18,10 @@ export function canEditPatientPersonal(req) {
   return isHrAdmin(req) || isCompanyNurse(req)
 }
 
+export function canViewDiseaseStats(req) {
+  return isHrAdmin(req) || isCompanyNurse(req)
+}
+
 export function requireCompanyNurse(req, res, next) {
   if (!isCompanyNurse(req)) {
     return res.status(403).json({ message: 'Company Nurse access required' })
@@ -32,9 +36,9 @@ export function requirePatientPersonalEditor(req, res, next) {
   next()
 }
 
-export function requireOnlyCompanyNurse(req, res, next) {
-  if (!isCompanyNurse(req)) {
-    return res.status(403).json({ message: 'Company Nurse access required' })
+export function requireDiseaseStatsViewer(req, res, next) {
+  if (!canViewDiseaseStats(req)) {
+    return res.status(403).json({ message: 'Disease statistics access required' })
   }
   next()
 }

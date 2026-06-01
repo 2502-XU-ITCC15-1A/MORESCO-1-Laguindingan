@@ -1,7 +1,7 @@
 import express from 'express'
 import { query } from '../db.js'
 import auth from '../middleware/auth.js'
-import { requireCompanyNurse, requireOnlyCompanyNurse } from '../middleware/roles.js'
+import { requireCompanyNurse, requireDiseaseStatsViewer } from '../middleware/roles.js'
 import { imageUpload } from '../upload.js'
 import { formatRecord } from '../utils/format.js'
 
@@ -134,7 +134,7 @@ async function syncRecordImages(recordId, retainedImageIds, uploadedPhotos) {
   return finalImages
 }
 
-router.get('/stats/diseases', auth, requireOnlyCompanyNurse, async (req, res) => {
+router.get('/stats/diseases', auth, requireDiseaseStatsViewer, async (req, res) => {
   try {
     const startMonth = req.query.startMonth ? new Date(`${req.query.startMonth}-01T00:00:00`) : null
     const endMonth = req.query.endMonth ? new Date(`${req.query.endMonth}-01T00:00:00`) : null

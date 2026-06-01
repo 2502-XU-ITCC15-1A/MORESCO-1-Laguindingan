@@ -389,7 +389,7 @@ Password: itmanager123
 
 ### View Disease Statistics
 
-1. Sign in as `Company Nurse`.
+1. Sign in as `HR Admin` or `Company Nurse`.
 2. Open the profile menu in the top-right corner.
 3. Click `Common Disease Stats`.
 4. Use the month range filters in the right drawer to filter common disease counts.
@@ -411,8 +411,27 @@ Password: itmanager123
 | `npm run lint` | Run ESLint |
 | `npm run db:init` | Initialize PostgreSQL tables |
 | `npm run db:seed` | Seed default data |
+| `npm run reset:it-manager -- "<new-password>"` | Reset the default IT Manager password and unlock the account |
 | `npm run backup` | Create a PostgreSQL backup under `backups/YYYY/MM/` |
 | `npm run restore -- "<file>"` | Restore a PostgreSQL backup file into the configured database |
+
+---
+
+## IT Manager Password Recovery
+
+If the IT Manager forgets the password or gets locked out, reset it from the server terminal. PostgreSQL must be running and `.env` must point to the correct database.
+
+```bash
+npm run reset:it-manager -- "newSecurePassword123"
+```
+
+By default, this resets the account with username `itmanager`. If the username was changed, pass the username or email as the second argument:
+
+```bash
+npm run reset:it-manager -- "newSecurePassword123" "itmanager@moresco.local"
+```
+
+The reset command also sets the account back to active, clears login lockout counters, and keeps the role as `IT Manager`.
 
 ---
 
