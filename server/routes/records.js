@@ -7,6 +7,7 @@ import { formatRecord } from '../utils/format.js'
 
 const router = express.Router()
 const upload = imageUpload('records')
+const MAX_RECORD_PHOTOS = 10
 
 function fileUrls(req) {
   return req.savedFileUrls || []
@@ -111,6 +112,17 @@ async function syncRecordImages(recordId, retainedImageIds, uploadedPhotos) {
   const existingImages = await loadRecordImages([recordId])
   const currentImages = existingImages.get(recordId) || []
   const keepIds = retainedImageIds ?? currentImages.map(image => image.id)
+  const validKeepIds = keepIds.filter(id => currentImages.some(image => image.id === id))
+
+  if (validKeepIds.length + uploadedPhotos.length > MAX_RECORD_PHOTOS) {
+    const remainingSlots = Math.max(0, MAX_RECORD_PHOTOS - validKeepIds.length)
+    const message = remainingSlots === 0
+      ? `Health records can have up to ${MAX_RECORD_PHOTOS} photos. Remove a photo before adding another.`
+      : `Health records can have up to ${MAX_RECORD_PHOTOS} photos. You can add ${remainingSlots} more.`
+    const error = new Error(message)
+    error.status = 400
+    throw error
+  }
 
   await query(
     `
@@ -118,10 +130,10 @@ async function syncRecordImages(recordId, retainedImageIds, uploadedPhotos) {
       WHERE record_id = $1
         AND NOT (id = ANY($2::int[]))
     `,
-    [recordId, keepIds.length > 0 ? keepIds : [-1]],
+    [recordId, validKeepIds.length > 0 ? validKeepIds : [-1]],
   )
 
-  const remainingImages = currentImages.filter(image => keepIds.includes(image.id))
+  const remainingImages = currentImages.filter(image => validKeepIds.includes(image.id))
   await insertRecordImages(recordId, uploadedPhotos, remainingImages.length)
 
   const refreshedImages = await loadRecordImages([recordId])
@@ -234,6 +246,10 @@ router.post('/:patientId', auth, requireCompanyNurse, upload.fields([
   try {
     const data = recordData(req.body)
     const uploadedPhotos = fileUrls(req)
+    if (uploadedPhotos.length > MAX_RECORD_PHOTOS) {
+      return res.status(400).json({ message: `Health records can have up to ${MAX_RECORD_PHOTOS} photos.` })
+    }
+
     const result = await query(
       `
         INSERT INTO health_records (
@@ -316,7 +332,7 @@ router.put('/:recordId', auth, requireCompanyNurse, upload.fields([
     res.json(formatRecord(record))
   } catch (error) {
     console.error('Update record error:', error)
-    res.status(500).json({ message: 'Server error' })
+    res.status(error.status || 500).json({ message: error.status ? error.message : 'Server error' })
   }
 })
 

@@ -3,6 +3,8 @@ import morescoLogo from '../../../../assets/logo.png'
 import ImageCarousel from './ImageCarousel/ImageCarousel.jsx'
 import './AccordionRecord.css'
 
+const MAX_RECORD_PHOTOS = 10
+
 function extractValue(str) {
   if (!str) return ''
   return str.replace(/\s*(mmhg|bpm|%|c)\s*/gi, '').trim()
@@ -65,17 +67,23 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
   const recordPhotos = Array.isArray(form.recordImages)
     ? form.recordImages.map(image => image.photoUrl).filter(Boolean)
     : []
+  const photoCount = recordPhotos.length
+  const photoColumns = photoCount <= 2 ? Math.max(photoCount, 1) : photoCount <= 4 ? 2 : photoCount <= 9 ? 3 : 5
+  const photoHeight = photoCount <= 2 ? 42 : photoCount <= 4 ? 34 : photoCount <= 9 ? 28 : 22
   const recordPhoto = recordPhotos.length > 0
     ? `
-      <div class="photo-grid">
+      <div class="attachments">
+        <div class="attachments-title">Attached Photos (${photoCount})</div>
+        <div class="photo-grid" style="--photo-columns: ${photoColumns}; --photo-height: ${photoHeight}mm;">
         ${recordPhotos.map((photoUrl, index) => `
           <div class="photo-card">
-            <img src="${photoUrl}" alt="Health record attachment ${index + 1}" />
+            <img src="${escapeHtml(photoUrl)}" alt="Health record attachment ${index + 1}" />
           </div>
         `).join('')}
+        </div>
       </div>
     `
-    : '<div class="photo-card empty">No attached photos</div>'
+    : ''
 
   const field = value => escapeHtml(value || 'Not recorded')
 
@@ -102,39 +110,26 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
         color: var(--ink);
         background: #eef2fb;
       }
+      @page {
+        size: A4;
+        margin: 0;
+      }
       .page {
         width: 210mm;
-        min-height: 297mm;
         margin: 0 auto;
         background: white;
-        padding: 18mm 16mm;
-      }
-      .print-meta {
-        display: grid;
-        grid-template-columns: 1fr auto 1fr;
-        align-items: center;
-        margin-bottom: 14px;
-        font-size: 11px;
-        color: var(--muted);
-      }
-      .print-meta strong {
-        color: var(--ink);
-      }
-      .print-meta-title {
-        color: var(--ink);
-        font-weight: 700;
-        text-align: center;
+        padding: 14mm 14mm 12mm;
       }
       .hero {
         display: grid;
-        grid-template-columns: 96px 1fr;
-        gap: 18px;
+        grid-template-columns: 82px 1fr;
+        gap: 16px;
         align-items: center;
-        margin-bottom: 18px;
+        margin-bottom: 14px;
       }
       .logo-wrap {
-        width: 96px;
-        height: 96px;
+        width: 82px;
+        height: 82px;
         border-radius: 50%;
         border: 4px solid var(--brand);
         display: flex;
@@ -155,20 +150,20 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
       }
       .hero-copy h1 {
         margin: 0;
-        font-size: 28px;
+        font-size: 26px;
         letter-spacing: 0.08em;
         color: #c7d3ee;
         font-weight: 800;
       }
       .hero-copy h2 {
         margin: 0;
-        font-size: 18px;
+        font-size: 17px;
         letter-spacing: 0.14em;
         color: var(--brand);
       }
       .hero-copy p {
         margin: 6px 0 0;
-        font-size: 12px;
+        font-size: 11px;
         color: var(--muted);
       }
       .section-grid {
@@ -192,7 +187,9 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
         text-transform: uppercase;
         letter-spacing: 0.08em;
         font-size: 12px;
-        padding: 8px 10px;
+        padding: 6px 10px;
+        break-after: avoid;
+        page-break-after: avoid;
       }
       table {
         width: 100%;
@@ -200,7 +197,7 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
       }
       td {
         border-top: 1px solid var(--line);
-        padding: 7px 10px;
+        padding: 6px 10px;
         font-size: 12px;
         vertical-align: top;
       }
@@ -214,25 +211,44 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
         border: 1px solid var(--line);
         border-top: none;
       }
-      .notes {
-        min-height: 110px;
-        padding: 10px 12px 14px;
+      .section-body {
+        padding: 9px 12px 11px;
         font-size: 12px;
-        line-height: 1.6;
+        line-height: 1.45;
+      }
+      .text-block {
+        padding: 8px 0 0;
+        font-size: 12px;
+        line-height: 1.45;
         white-space: pre-wrap;
       }
       .record-layout {
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 8px;
+      }
+      .attachments {
+        margin-top: 8px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+      .attachments-title {
+        color: var(--brand);
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        margin-bottom: 7px;
+        text-transform: uppercase;
+        break-after: avoid;
+        page-break-after: avoid;
       }
       .photo-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 10px;
+        grid-template-columns: repeat(var(--photo-columns, 3), minmax(0, 1fr));
+        gap: 6px;
       }
       .photo-card {
-        min-height: 150px;
+        height: var(--photo-height, 28mm);
         border: 1px dashed var(--line);
         background: var(--panel);
         display: flex;
@@ -245,14 +261,14 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
       }
       .photo-card img {
         max-width: 100%;
-        max-height: 132px;
+        max-height: 100%;
         object-fit: contain;
       }
       .badges {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
-        margin-top: 8px;
+        margin-top: 10px;
       }
       .badge {
         border: 1px solid var(--line);
@@ -264,18 +280,29 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
         font-weight: 700;
       }
       @media print {
-        body { background: white; }
-        .page { margin: 0; min-height: auto; }
+        body {
+          background: white;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+        .page {
+          margin: 0;
+          min-height: auto;
+          break-after: avoid;
+          page-break-after: avoid;
+        }
+        table,
+        tr,
+        .remarks-section,
+        .photo-card {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
       }
     </style>
   </head>
   <body>
     <div class="page">
-      <div class="print-meta">
-        <div><strong>Created On:</strong> ${field(formatDateTimeLabel(record?.createdAt))}</div>
-        <div class="print-meta-title">MORESCO-1 Health Record</div>
-        <div></div>
-      </div>
       <div class="hero">
         <div class="logo-wrap">
           <img src="${logoSrc}" alt="MORESCO-1 logo" />
@@ -326,7 +353,7 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
 
       <div class="wide-section">
         <div class="section-title">Health Record Details</div>
-        <div class="notes">
+        <div class="section-body">
           <div class="record-layout">
             <div>
               <table>
@@ -341,16 +368,18 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
               <div class="badges">
                 <span class="badge">Chief Complaints</span>
               </div>
-              <div class="notes">${field(form.complaints)}</div>
+              <div class="text-block">${field(form.complaints)}</div>
             </div>
             ${recordPhoto}
           </div>
         </div>
       </div>
 
-      <div class="wide-section">
+      <div class="wide-section remarks-section">
         <div class="section-title">Remarks</div>
-        <div class="notes">${field(form.remarks)}</div>
+        <div class="section-body">
+          <div class="text-block">${field(form.remarks)}</div>
+        </div>
       </div>
     </div>
   </body>
@@ -373,6 +402,7 @@ function AccordionRecord({
   const [editMode, setEditMode] = useState(false)
   const [saving, setSaving] = useState(false)
   const [photoFiles, setPhotoFiles] = useState([])
+  const [photoError, setPhotoError] = useState('')
   const photoInputRef = useRef(null)
 
   const [form, setForm] = useState({
@@ -407,9 +437,22 @@ function AccordionRecord({
   }
 
   async function handlePhotoChange(e) {
-    const files = Array.from(e.target.files || [])
+    const selectedFiles = Array.from(e.target.files || [])
     e.target.value = ''
-    if (files.length === 0) return
+    if (selectedFiles.length === 0) return
+
+    const availableSlots = Math.max(0, MAX_RECORD_PHOTOS - form.recordImages.length)
+    if (availableSlots === 0) {
+      setPhotoError(`Health records can have up to ${MAX_RECORD_PHOTOS} photos. Remove one before adding another.`)
+      return
+    }
+
+    const files = selectedFiles.slice(0, availableSlots)
+    setPhotoError(
+      selectedFiles.length > availableSlots
+        ? `Only ${availableSlots} more photo${availableSlots > 1 ? 's' : ''} can be added. Health records are limited to ${MAX_RECORD_PHOTOS} photos.`
+        : '',
+    )
 
     setPhotoFiles(current => [...current, ...files])
     const previews = await Promise.all(files.map(file => new Promise(resolve => {
@@ -432,6 +475,7 @@ function AccordionRecord({
   }
 
   function handleRemoveImage(imageId) {
+    setPhotoError('')
     setForm(current => ({
       ...current,
       recordImages: current.recordImages.filter(image => image.id !== imageId),
@@ -440,10 +484,13 @@ function AccordionRecord({
 
   async function handleSave() {
     setSaving(true)
+    setPhotoError('')
     try {
       await onSave?.(form, photoFiles)
       setPhotoFiles([])
       setEditMode(false)
+    } catch (err) {
+      setPhotoError(err.message || 'Unable to save health record photos.')
     } finally {
       setSaving(false)
     }
@@ -543,7 +590,9 @@ function AccordionRecord({
                   onChangePhotoClick={() => photoInputRef.current?.click()}
                   pendingUploadsCount={photoFiles.length}
                   onRemoveImage={handleRemoveImage}
+                  maxPhotos={MAX_RECORD_PHOTOS}
                 />
+                {photoError && <div className="acc-photo-limit-error">{photoError}</div>}
               </div>
               <input ref={photoInputRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handlePhotoChange}/>
 
