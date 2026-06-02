@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import morescoLogo from '../../../../assets/logo.png'
 import ImageCarousel from './ImageCarousel/ImageCarousel.jsx'
 import './AccordionRecord.css'
@@ -26,6 +26,22 @@ function formatDateLabel(value) {
   }
 
   return String(value)
+}
+
+function formatDateTimeLabel(value) {
+  if (!value) return 'Not recorded'
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+
+  return date.toLocaleString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+  })
 }
 
 function formatJoinedList(items, key) {
@@ -92,6 +108,22 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
         margin: 0 auto;
         background: white;
         padding: 18mm 16mm;
+      }
+      .print-meta {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        margin-bottom: 14px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .print-meta strong {
+        color: var(--ink);
+      }
+      .print-meta-title {
+        color: var(--ink);
+        font-weight: 700;
+        text-align: center;
       }
       .hero {
         display: grid;
@@ -239,6 +271,11 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
   </head>
   <body>
     <div class="page">
+      <div class="print-meta">
+        <div><strong>Created On:</strong> ${field(formatDateTimeLabel(record?.createdAt))}</div>
+        <div class="print-meta-title">MORESCO-1 Health Record</div>
+        <div></div>
+      </div>
       <div class="hero">
         <div class="logo-wrap">
           <img src="${logoSrc}" alt="MORESCO-1 logo" />
@@ -294,6 +331,7 @@ function buildPrintableHtml({ patient, healthData, record, form, logoSrc }) {
             <div>
               <table>
                 <tr><td class="label">Record Date</td><td>${field(formatDateLabel(record?.recordDate || record?.date))}</td></tr>
+                <tr><td class="label">Created On</td><td>${field(formatDateTimeLabel(record?.createdAt))}</td></tr>
                 <tr><td class="label">Blood Pressure</td><td>${field(form.bpVal ? `${form.bpVal} mmhg` : '')}</td></tr>
                 <tr><td class="label">O2 Saturation</td><td>${field(form.o2Val ? `${form.o2Val} %` : '')}</td></tr>
                 <tr><td class="label">Heart Rate</td><td>${field(form.hrVal ? `${form.hrVal} bpm` : '')}</td></tr>
@@ -329,6 +367,7 @@ function AccordionRecord({
   canEdit = true,
   patient = null,
   healthData = null,
+  onEditingChange,
 }) {
   const [tab, setTab] = useState('complaints')
   const [editMode, setEditMode] = useState(false)
@@ -352,6 +391,16 @@ function AccordionRecord({
           persisted: true,
         })),
   })
+
+  useEffect(() => {
+    onEditingChange?.(record.id, editMode)
+  }, [record.id, editMode, onEditingChange])
+
+  useEffect(() => {
+    return () => {
+      onEditingChange?.(record.id, false)
+    }
+  }, [record.id, onEditingChange])
 
   function update(field, value) {
     setForm(f => ({ ...f, [field]: value }))
