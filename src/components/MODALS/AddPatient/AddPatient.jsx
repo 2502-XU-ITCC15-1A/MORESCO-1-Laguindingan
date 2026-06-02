@@ -32,6 +32,16 @@ function sanitizePatientId(value) {
   return String(value || '').replace(/\D/g, '').slice(0, PATIENT_ID_LENGTH)
 }
 
+function hasPatientDraft(form, step) {
+  if (step > 0) return true
+
+  return Object.entries(INITIAL_FORM).some(([key, initialValue]) => {
+    const value = form[key]
+    if (value instanceof File) return true
+    return value !== initialValue
+  })
+}
+
 function AddPatient({ show, onClose, onAdd }) {
   const [step, setStep]   = useState(0)
   const [form, setForm]   = useState(INITIAL_FORM)
@@ -117,9 +127,7 @@ function AddPatient({ show, onClose, onAdd }) {
 
     try {
       await onAdd(payload)
-      setForm(INITIAL_FORM)
-      setStep(0)
-      setErrors({})
+      resetForm()
     } catch (err) {
       setErrors({ submit: err.message || 'Unable to save patient.' })
     } finally {
@@ -127,10 +135,21 @@ function AddPatient({ show, onClose, onAdd }) {
     }
   }
 
-  function handleClose() {
+  function resetForm() {
     setForm(INITIAL_FORM)
     setStep(0)
     setErrors({})
+  }
+
+  function handleClose() {
+    if (saving) return
+
+    if (hasPatientDraft(form, step)) {
+      const confirmed = window.confirm('You have unsaved patient information. Leave anyway and discard this draft?')
+      if (!confirmed) return
+    }
+
+    resetForm()
     onClose()
   }
 
@@ -141,6 +160,14 @@ function AddPatient({ show, onClose, onAdd }) {
     <Modal show={show} onHide={handleClose} centered contentClassName="add-patient-modal-content" dialogClassName="add-patient-dialog">
       <Modal.Header className="add-patient-header">
         <h2 className="add-patient-title">Create Patient</h2>
+        <button
+          className="add-patient-close"
+          onClick={handleClose}
+          aria-label="Close create patient"
+          type="button"
+        >
+          &times;
+        </button>
       </Modal.Header>
 
       <Modal.Body className="add-patient-body">
