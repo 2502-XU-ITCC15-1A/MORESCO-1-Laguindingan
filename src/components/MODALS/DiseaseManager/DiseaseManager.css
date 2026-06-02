@@ -9,11 +9,33 @@
   color: white;
   border: none;
   padding: 16px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .disease-header h2 {
   font-size: 20px;
   margin: 0;
+}
+
+.disease-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: white;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.disease-close:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .disease-body {

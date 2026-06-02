@@ -60,6 +60,14 @@ function DiseaseManager({ show, onClose }) {
     <Modal show={show} onHide={onClose} centered contentClassName="disease-modal">
       <Modal.Header className="disease-header">
         <h2>Disease Dictionary</h2>
+        <button
+          className="disease-close"
+          onClick={onClose}
+          aria-label="Close disease dictionary"
+          type="button"
+        >
+          &times;
+        </button>
       </Modal.Header>
       <Modal.Body className="disease-body">
         <form className="disease-form" onSubmit={handleAdd}>
