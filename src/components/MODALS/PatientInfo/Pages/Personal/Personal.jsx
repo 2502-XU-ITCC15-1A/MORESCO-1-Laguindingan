@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   calculateAgeFromBirthDate,
   calculateBMIFromHeightAndWeight,
@@ -144,11 +144,18 @@ function sanitizePatientId(value) {
     .slice(0, PATIENT_ID_LENGTH)
 }
 
-function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements = false }) {
+function Personal({ patient, age, onUpdate, canEdit = false, canEditMeasurements = false, onEditingChange }) {
   const [editMode, setEditMode] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [form, setForm] = useState(() => buildForm(patient))
+
+  useEffect(() => {
+    onEditingChange?.(editMode)
+    return () => {
+      onEditingChange?.(false)
+    }
+  }, [editMode, onEditingChange])
 
   if (!patient) return null
 

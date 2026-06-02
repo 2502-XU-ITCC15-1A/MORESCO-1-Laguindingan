@@ -18,6 +18,8 @@ function rowToRecord(row) {
     id: row.id,
     patientId: row.patient_id,
     recordDate: row.record_date,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
     bpVal: row.bp_val,
     o2Val: row.o2_val,
     hrVal: row.hr_val,

@@ -74,6 +74,8 @@ export function formatRecord(record) {
     patientId: record.patientId,
     date: record.recordDate ? record.recordDate.toISOString().slice(0, 10).replaceAll('-', '/') : '',
     recordDate: record.recordDate ? record.recordDate.toISOString().slice(0, 10) : '',
+    createdAt: record.createdAt ? record.createdAt.toISOString() : '',
+    updatedAt: record.updatedAt ? record.updatedAt.toISOString() : '',
     bpVal: record.bpVal || '',
     o2Val: record.o2Val || '',
     hrVal: record.hrVal || '',

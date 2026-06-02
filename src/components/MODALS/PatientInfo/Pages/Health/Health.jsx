@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './Health.css'
 
 const BLOOD_TYPES = ['Unknown', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
@@ -53,13 +53,20 @@ function TagList({ items, onAdd, onRemove, placeholder, editMode }) {
   )
 }
 
-function Health({ healthData, onUpdate, canEdit = true }) {
+function Health({ healthData, onUpdate, canEdit = true, onEditingChange }) {
   const [editMode, setEditMode] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [allergies, setAllergies] = useState(healthData?.allergies || [])
   const [conditions, setConditions] = useState(healthData?.chronicConditions || [])
   const [bloodType, setBloodType] = useState(healthData?.bloodType || 'Unknown')
+
+  useEffect(() => {
+    onEditingChange?.(editMode)
+    return () => {
+      onEditingChange?.(false)
+    }
+  }, [editMode, onEditingChange])
 
   async function handleSave() {
     setSaving(true)

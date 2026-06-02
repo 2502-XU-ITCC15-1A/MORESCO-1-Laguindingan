@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import Modal from 'react-bootstrap/Modal'
 import { diseasesAPI, patientsAPI, recordsAPI } from '../../../api/client.js'
 import AccordionRecord from './AccordionRecord/AccordionRecord.jsx'
@@ -92,6 +92,9 @@ function PatientInfo({
   const [openRecordId, setOpenRecordId] = useState(null)
   const [showCreateRecordForm, setShowCreateRecordForm] = useState(false)
   const [newRecordDate, setNewRecordDate] = useState(formatDateForDisplay(getTodayDateInputValue()))
+  const [personalEditing, setPersonalEditing] = useState(false)
+  const [healthEditing, setHealthEditing] = useState(false)
+  const [editingRecordIds, setEditingRecordIds] = useState(() => new Set())
   const patientPhotoInputRef = useRef(null)
   const recordDatePickerRef = useRef(null)
 
@@ -133,12 +136,47 @@ function PatientInfo({
     diseasesAPI.getAll().then(setDiseases).catch(() => setDiseases([]))
   }, [show])
 
+  const handleRecordEditingChange = useCallback((recordId, isEditing) => {
+    setEditingRecordIds(current => {
+      const next = new Set(current)
+      if (isEditing) {
+        next.add(recordId)
+      } else {
+        next.delete(recordId)
+      }
+      return next
+    })
+  }, [])
+
   if (!patient) return null
 
   const displayName = `${patient.firstName} ${patient.lastName}`
 
   const currentUser = getStoredUser()
   const displayRole = roleLabel(currentUser.role)
+  const hasActiveEdits = personalEditing || healthEditing || editingRecordIds.size > 0
+
+  function confirmDiscardEdits() {
+    return window.confirm('You have unsaved edits. Leave anyway and discard those changes?')
+  }
+
+  function resetEditTracking() {
+    setPersonalEditing(false)
+    setHealthEditing(false)
+    setEditingRecordIds(new Set())
+  }
+
+  function requestClose() {
+    if (hasActiveEdits && !confirmDiscardEdits()) return
+    resetEditTracking()
+    onClose?.()
+  }
+
+  function handleTabChange(nextTab) {
+    if (nextTab === activeTab) return
+    if (hasActiveEdits && !confirmDiscardEdits()) return
+    setActiveTab(nextTab)
+  }
 
   function calcAge(birthDate) {
     if (!birthDate) return null
@@ -167,9 +205,15 @@ function PatientInfo({
   })
 
   async function handleDeleteRecord(id) {
+    const record = records.find(item => item.id === id)
+    const label = record?.recordDate || record?.date || 'this health record'
+    const confirmed = window.confirm(`Delete health record from ${label}? This action cannot be undone.`)
+    if (!confirmed) return
+
     await recordsAPI.delete(id)
     setRecords(prev => prev.filter(r => r.id !== id))
     setOpenRecordId(current => current === id ? null : current)
+    handleRecordEditingChange(id, false)
   }
 
   async function handleAddRecord() {
@@ -348,7 +392,8 @@ function PatientInfo({
   return (
     <Modal
       show={show}
-      onHide={onClose}
+      onHide={requestClose}
+      onExited={resetEditTracking}
       centered
       contentClassName="pi-modal-content"
       dialogClassName="pi-modal-dialog"
@@ -373,7 +418,7 @@ function PatientInfo({
           </div>
           <button
             className="pi-header-close"
-            onClick={onClose}
+            onClick={requestClose}
             aria-label="Close patient profile"
             type="button"
           >
@@ -431,14 +476,14 @@ function PatientInfo({
             <div className="pi-tabs">
               <button
                 className={`pi-tab ${activeTab === 'personal' ? 'active' : ''}`}
-                onClick={() => setActiveTab('personal')}
+                onClick={() => handleTabChange('personal')}
                 type="button"
               >
                 Personal
               </button>
               <button
                 className={`pi-tab ${activeTab === 'health' ? 'active' : ''}`}
-                onClick={() => setActiveTab('health')}
+                onClick={() => handleTabChange('health')}
                 type="button"
               >
                 Health
@@ -453,6 +498,7 @@ function PatientInfo({
                   onUpdate={handlePersonalUpdate}
                   canEdit={canEditPersonalInfo}
                   canEditMeasurements={canEditMeasurements}
+                  onEditingChange={setPersonalEditing}
                 />
               )}
               {activeTab === 'health' && (
@@ -460,6 +506,7 @@ function PatientInfo({
                   healthData={patientHealth}
                   onUpdate={handleHealthUpdate}
                   canEdit={canEditHealthInfo}
+                  onEditingChange={setHealthEditing}
                 />
               )}
             </div>
@@ -587,6 +634,7 @@ function PatientInfo({
                   canEdit={canEditRecords}
                   patient={patient}
                   healthData={patientHealth}
+                  onEditingChange={handleRecordEditingChange}
                 />
               ))}
             </div>
