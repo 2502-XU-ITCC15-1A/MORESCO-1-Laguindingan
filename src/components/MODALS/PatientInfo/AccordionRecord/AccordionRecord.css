@@ -144,6 +144,20 @@
   font-family: inherit;
 }
 
+.acc-change-photo-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.acc-photo-limit-error {
+  margin-top: 6px;
+  color: #b91c1c;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+}
+
 /* Vitals box */
 .acc-vitals {
   background: #0D2B77;

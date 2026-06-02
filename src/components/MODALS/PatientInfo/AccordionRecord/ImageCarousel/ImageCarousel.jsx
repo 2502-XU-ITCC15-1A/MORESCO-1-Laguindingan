@@ -26,6 +26,7 @@ function ImageCarousel({
   pendingUploadsCount = 0,
   onChangePhotoClick,
   onRemoveImage,
+  maxPhotos = 10,
 }) {
   const [activeStep, setActiveStep] = useState(0)
   const [zoomOpen, setZoomOpen] = useState(false)
@@ -37,6 +38,7 @@ function ImageCarousel({
     [images],
   )
   const maxSteps = safeImages.length
+  const hasReachedMaxPhotos = maxSteps >= maxPhotos
   const visibleStep = maxSteps > 0 ? Math.min(activeStep, maxSteps - 1) : 0
   const currentImage = safeImages[visibleStep] || null
 
@@ -168,13 +170,18 @@ function ImageCarousel({
         <button
           className="acc-change-photo-btn"
           onClick={onChangePhotoClick}
+          disabled={hasReachedMaxPhotos}
           type="button"
         >
-          {maxSteps > 0 ? 'Add More Photos' : 'Add Photos'}
+          {hasReachedMaxPhotos ? `Maximum ${maxPhotos} Photos` : maxSteps > 0 ? 'Add More Photos' : 'Add Photos'}
         </button>
       )}
 
-      {pendingUploadsCount > 0 && (
+      {hasReachedMaxPhotos && editMode ? (
+        <div className="acc-carousel-pending">
+          Maximum {maxPhotos} photos reached
+        </div>
+      ) : pendingUploadsCount > 0 && (
         <div className="acc-carousel-pending">
           {pendingUploadsCount} new photo{pendingUploadsCount > 1 ? 's' : ''} ready to save
         </div>
